@@ -1,6 +1,27 @@
 [package]
-name = "readmaker_core"
+name = "readmaker-rust"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+
+# React Native用ライブラリ出力設定
+[lib]
+name = "readmaker_core"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "extract_dict"
+path = "extract_dict.rs"
+
+[[bin]]
+name = "test_bridge"
+path = "test_bridge.rs"
 
 [dependencies]
+vibrato = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+zstd = "0.13"
