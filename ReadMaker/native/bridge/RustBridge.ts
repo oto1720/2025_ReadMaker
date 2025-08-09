@@ -18,16 +18,19 @@ interface RustBridgeNative {
 }
 
 class RustBridge implements MorphologyAnalysis {
-  private nativeModule: RustBridgeNative;
+  private nativeModule: RustBridgeNative | null;
+  private available = false;
 
   constructor() {
     // プラットフォーム別ネイティブモジュール取得
-    this.nativeModule = NativeModules.ReadMakerRustBridge;
-    
-    if (!this.nativeModule) {
-      throw new Error(
-        `ReadMaker Rust Bridge not found. Platform: ${Platform.OS}\n` +
-        'Make sure the native module is properly installed.'
+    this.nativeModule = (NativeModules as any)?.ReadMakerRustBridge ?? null;
+    this.available = !!this.nativeModule;
+
+    if (!this.available) {
+      // ネイティブ未組み込みでもアプリを落とさず、フォールバックに切り替える
+      console.warn(
+        `ReadMaker Rust Bridge not found. Platform: ${Platform.OS}. ` +
+          'Falling back to JS-only tokenizer. Install native bridge to enable Rust acceleration.'
       );
     }
   }
@@ -55,6 +58,11 @@ class RustBridge implements MorphologyAnalysis {
         return [];
       }
       
+      // ネイティブ未利用時は早期フォールバック
+      if (!this.available || !this.nativeModule) {
+        return this.fallbackAnalysis(input);
+      }
+
       // Rustネイティブ関数呼び出し
       const jsonResult = await this.nativeModule.analyzeText(input);
       
@@ -77,6 +85,9 @@ class RustBridge implements MorphologyAnalysis {
    */
   async testBridge(): Promise<string> {
     try {
+      if (!this.available || !this.nativeModule) {
+        return 'ReadMaker Rust Bridge not available (fallback mode)';
+      }
       const result = await this.nativeModule.testBridge();
       return result;
     } catch (error) {

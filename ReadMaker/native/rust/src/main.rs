@@ -2,6 +2,7 @@
 /// Vibratoを用いた高速・高品質な形態素解析実装
 
 use std::fs::File;
+use std::env;
 use std::io;
 use serde_json;
 use vibrato::{Dictionary, Tokenizer};
@@ -12,10 +13,8 @@ pub fn main() {
     
     // Vibrato実装のテスト
     let sample_texts = vec![
-        "吾輩は猫である。名前はまだない。",
-        "学問のすすめ",
-        "今日は良い天気ですね。明日も晴れるでしょう。",
-        "これはテストです。任意の文章を処理できます。",
+        "これはテスト用の文章です。",
+        "任意の文章を処理できます。",
     ];
     
     for (i, text) in sample_texts.iter().enumerate() {
@@ -55,8 +54,9 @@ pub fn main() {
 
 /// Vibrato実装の形態素解析関数
 fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
-    // 辞書ファイルパス（プロジェクトルートからの相対パス）
-    let dict_path = "dictionaries/ipadic-mecab-2_7_0/system.dic";
+    // 辞書ファイルパス（環境変数で上書き可能）
+    let dict_path = env::var("READMAKER_DIC_PATH")
+        .unwrap_or_else(|_| "dictionaries/ipadic-mecab-2_7_0/system.dic".to_string());
     
     // 辞書ファイルの読み込み
     let dict_file = File::open(dict_path)?;
@@ -83,48 +83,23 @@ fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
 
 /// 現在のフォールバック実装（辞書準備まで使用）
 fn analyze_text_fallback(text: &str) -> Vec<String> {
-    match text {
-        "吾輩は猫である。名前はまだない。" => vec![
-            "吾輩".to_string(),
-            "は".to_string(),
-            "猫".to_string(),
-            "で".to_string(),
-            "ある".to_string(),
-            "。".to_string(),
-            "名前".to_string(),
-            "は".to_string(),
-            "まだ".to_string(),
-            "ない".to_string(),
-            "。".to_string(),
-        ],
-        "学問のすすめ" => vec![
-            "学問".to_string(),
-            "の".to_string(),
-            "すすめ".to_string(),
-        ],
-        "今日は良い天気ですね。明日も晴れるでしょう。" => vec![
-            "今日".to_string(),
-            "は".to_string(),
-            "良い".to_string(),
-            "天気".to_string(),
-            "です".to_string(),
-            "ね".to_string(),
-            "。".to_string(),
-            "明日".to_string(),
-            "も".to_string(),
-            "晴れる".to_string(),
-            "でしょう".to_string(),
-            "。".to_string(),
-        ],
-        _ => simple_fallback_split(text),
+    // 句読点・空白で分割（簡易フォールバック）
+    let is_sep = |c: char| c.is_whitespace() || matches!(c, '。' | '、' | '！' | '？' | '\n' | '\r');
+    let mut parts = Vec::new();
+    let mut buf = String::new();
+    for ch in text.chars() {
+        if is_sep(ch) {
+            if !buf.is_empty() {
+                parts.push(std::mem::take(&mut buf));
+            }
+        } else {
+            buf.push(ch);
+        }
     }
-}
-
-/// 簡易分割（フォールバック用）
-fn simple_fallback_split(text: &str) -> Vec<String> {
-    text.chars()
-        .map(|c| c.to_string())
-        .collect()
+    if !buf.is_empty() {
+        parts.push(buf);
+    }
+    parts
 }
 
 /// 形態素解析結果をJSON形式で返す（React Native用）

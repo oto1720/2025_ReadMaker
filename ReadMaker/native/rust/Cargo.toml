@@ -16,6 +16,10 @@ path = "src/main.rs"
 name = "extract_dict"
 path = "extract_dict.rs"
 
+[[bin]]
+name = "test_bridge"
+path = "test_bridge.rs"
+
 [dependencies]
 vibrato = "0.5"
 serde = { version = "1.0", features = ["derive"] }

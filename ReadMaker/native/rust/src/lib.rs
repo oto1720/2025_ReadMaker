@@ -5,14 +5,17 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
 use std::fs::File;
+use std::env;
 use std::io;
 use serde_json;
 use vibrato::{Dictionary, Tokenizer};
 
 /// Vibrato実装の形態素解析関数
 fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
-    // 辞書ファイルパス（プロジェクトルートからの相対パス）
-    let dict_path = "dictionaries/ipadic-mecab-2_7_0/system.dic";
+    // 辞書ファイルパス（環境変数で上書き可能）
+    // READMAKER_DIC_PATH が設定されていればそれを使用、なければ既定の相対パス
+    let dict_path = env::var("READMAKER_DIC_PATH")
+        .unwrap_or_else(|_| "dictionaries/ipadic-mecab-2_7_0/system.dic".to_string());
     
     // 辞書ファイルの読み込み
     let dict_file = File::open(dict_path)?;

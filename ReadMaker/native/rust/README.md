@@ -66,6 +66,16 @@ pub fn analyze_text(input: &str) -> Vec<String>
 cargo run --bin extract_dict dictionaries/ipadic-mecab-2_7_0/system.dic.zst dictionaries/ipadic-mecab-2_7_0/system.dic
 ```
 
+### 辞書パスの指定（任意）
+実行時に環境変数 `READMAKER_DIC_PATH` を設定すると、辞書の場所を切り替えられます。
+
+```powershell
+$env:READMAKER_DIC_PATH = "C:\\path\\to\\system.dic"; cargo run --bin main
+```
+```bash
+export READMAKER_DIC_PATH=/path/to/system.dic && cargo run --bin main
+```
+
 ### テスト実行
 ```bash
 cargo run --bin main
