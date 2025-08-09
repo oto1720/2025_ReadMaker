@@ -64,5 +64,5 @@ let json = words_to_json(&["吾輩は猫である", "名前はまだない"]);
 
 ---
 
-**開発者**: @oto1720  
+**開発者**: @otonasi-muonn
 **ブランチ**: feature/rust-backend
