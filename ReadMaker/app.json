@@ -1,4 +1,13 @@
 {
-  "name": "ReadMaker",
-  "displayName": "ReadMaker"
+  "expo": {
+    "name": "ReadMaker",
+    "slug": "ReadMaker",
+    "scheme": "ReadMaker",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
 }
