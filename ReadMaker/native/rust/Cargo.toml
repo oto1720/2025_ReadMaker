@@ -3,6 +3,11 @@ name = "readmaker-rust"
 version = "0.1.0"
 edition = "2021"
 
+# React Native用ライブラリ出力設定
+[lib]
+name = "readmaker_core"
+crate-type = ["cdylib", "rlib"]
+
 [[bin]]
 name = "main"
 path = "src/main.rs"

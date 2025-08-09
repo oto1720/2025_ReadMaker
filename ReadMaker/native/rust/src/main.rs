@@ -6,7 +6,8 @@ use std::io;
 use serde_json;
 use vibrato::{Dictionary, Tokenizer};
 
-fn main() {
+// ライブラリとしてもバイナリとしても使用可能
+pub fn main() {
     println!("=== ReadMaker Core - Vibrato形態素解析エンジン ===");
     
     // Vibrato実装のテスト
@@ -127,7 +128,7 @@ fn simple_fallback_split(text: &str) -> Vec<String> {
 }
 
 /// 形態素解析結果をJSON形式で返す（React Native用）
-fn words_to_json(words: &[String]) -> String {
+pub fn words_to_json(words: &[String]) -> String {
     serde_json::to_string(words).unwrap_or_else(|_| "[]".to_string())
 }
 
