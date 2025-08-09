@@ -88,7 +88,7 @@ fn words_to_json(words: &[String]) -> String {
     format!("[{}]", words_json.join(","))
 }
 
-/// 将来的な形態素解析API関数（プロトタイプ）
+/// 将来的な形態素解析関数（プロトタイプ）
 pub fn analyze_text(input: &str) -> Vec<String> {
     // 現在はハードコード結果 + フォールバック、将来的に lindera/vaporetto に置き換え
     get_morphological_analysis(input)

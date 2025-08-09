@@ -1,7 +1,7 @@
-# ReadMaker Core - Rustバックエンド
+# ReadMaker Core - Rustネイティブモジュール
 
 速読アプリ「ぱらぱら読書メーカー」のRust実装部分です。  
-形態素解析とテキスト処理を担当します。
+形態素解析とテキスト処理をクライアントサイドで高速実行します。
 
 ## 現在の実装状況
 
@@ -29,7 +29,7 @@ cargo run
 JSON出力: ["吾輩は猫である","名前はまだない"]
 ```
 
-## API関数
+## 内部関数
 
 ### analyze_text(input: &str) -> Vec<String>
 
@@ -52,7 +52,7 @@ let json = words_to_json(&["吾輩は猫である", "名前はまだない"]);
 ## 今後の開発予定
 
 1. **形態素解析ライブラリの導入**（lindera/vaporetto）
-2. **React Nativeとの連携API**
+2. **React Nativeとのネイティブブリッジ連携**
 3. **パフォーマンス最適化**
 4. **エラーハンドリング強化**
 
