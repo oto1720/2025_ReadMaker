@@ -2,15 +2,60 @@ import React,{ useState } from 'react';
 import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+
 function WriteText() {
+    const [titleBoxHeight, setTitleBoxHeight] = useState(40);
+    const [textBoxHeight, setTextBoxHeight] = useState(40);
+    const [text, setText] = useState('');
+    function GetDifficult(length:number){
+        switch(true){
+            case length<50:
+                return '初級';
+            case length<200:
+                return '中級';
+            case length<400:
+                return '上級';
+            case length>=400:
+                return '超上級';
+        }
+    }
     return (
         <View style={styles.writeScreen}>
-            <Text style={styles.itemText}>読みたい文章を入力してください</Text>
+            <Text style={styles.itemText}>タイトルを入力してください</Text>
             <TextInput
-                style={styles.textHolder}
-                placeholder="ここにテキストを入力してください"
+                style={{
+                    height: Math.max(40, titleBoxHeight),
+                    borderColor: 'gray',
+                    borderWidth: 1,
+                    width: '100%',
+                    marginTop: 10 , 
+                    textAlignVertical: 'top',
+                }}
+                placeholder="例) 竹取物語"
                 multiline
+                onContentSizeChange={(e)=>{
+                    setTitleBoxHeight(e.nativeEvent.contentSize.height);
+                }}
                 />
+            <Text style={styles.itemText}>読みたい文章を入力してください</Text>
+            <TextInput style={{
+                    height: Math.max(40, textBoxHeight),
+                    borderColor: 'gray',
+                    borderWidth: 1,
+                    width: '100%',
+                    marginTop: 10 , 
+                    textAlignVertical: 'top',
+                }}
+                placeholder="例) 今は昔、竹取の翁と畏怖ものありけり…"
+                value={text}
+                onChangeText={(text)=>setText(text)}
+                multiline
+                onContentSizeChange={(e)=>{
+                    setTextBoxHeight(e.nativeEvent.contentSize.height);
+                }}
+            >
+            </TextInput>
+            <Text style={{alignSelf:'flex-start',color:'gray'}}>{text.length}文字 | 難易度:{GetDifficult(text.length)}</Text>
         </View>
     );
 }
@@ -103,7 +148,8 @@ const styles = StyleSheet.create({
     writeScreen:{
         flex:1,
         alignItems:'center',
-        marginLeft:10
+        marginLeft:10,
+        marginRight:10,
     },itemText:{
         fontSize:16,
         color:'#000',
@@ -111,11 +157,6 @@ const styles = StyleSheet.create({
         marginTop:10
     },
     textHolder:{
-        height: 100,
-        borderColor: 'gray',
-        borderWidth: 1,
-        width: '90%',
-        marginTop: 10 ,
-        
+           
     }
 });
