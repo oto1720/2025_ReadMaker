@@ -1,12 +1,14 @@
 import React,{ useState } from 'react';
-import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput } from 'react-native';
+import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput,ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 
 function WriteText() {
     const [titleBoxHeight, setTitleBoxHeight] = useState(40);
     const [textBoxHeight, setTextBoxHeight] = useState(40);
+    const [title, setTitle] = useState('');
     const [text, setText] = useState('');
+    const [howToShow, setHowToShow] = useState('normal');
     function GetDifficult(length:number){
         switch(true){
             case length<50:
@@ -20,43 +22,96 @@ function WriteText() {
         }
     }
     return (
-        <View style={styles.writeScreen}>
-            <Text style={styles.itemText}>タイトルを入力してください</Text>
-            <TextInput
-                style={{
-                    height: Math.max(40, titleBoxHeight),
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    width: '100%',
-                    marginTop: 10 , 
-                    textAlignVertical: 'top',
-                }}
-                placeholder="例) 竹取物語"
-                multiline
-                onContentSizeChange={(e)=>{
-                    setTitleBoxHeight(e.nativeEvent.contentSize.height);
-                }}
-                />
-            <Text style={styles.itemText}>読みたい文章を入力してください</Text>
-            <TextInput style={{
-                    height: Math.max(40, textBoxHeight),
-                    borderColor: 'gray',
-                    borderWidth: 1,
-                    width: '100%',
-                    marginTop: 10 , 
-                    textAlignVertical: 'top',
-                }}
-                placeholder="例) 今は昔、竹取の翁と畏怖ものありけり…"
-                value={text}
-                onChangeText={(text)=>setText(text)}
-                multiline
-                onContentSizeChange={(e)=>{
-                    setTextBoxHeight(e.nativeEvent.contentSize.height);
-                }}
-            >
-            </TextInput>
-            <Text style={{alignSelf:'flex-start',color:'gray'}}>{text.length}文字 | 難易度:{GetDifficult(text.length)}</Text>
-        </View>
+        <ScrollView >
+            <View>
+                <View style={styles.writeScreen}>        
+                    <View style={styles.itemView}>
+                        <Text style={styles.itemText}>タイトル</Text>
+                        <TouchableOpacity onPress={()=>
+                                setTitle('')  
+                            }>
+                            <Text style={styles.clearButton}>✖</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TextInput
+                        style={{
+                            height: Math.max(40, titleBoxHeight),
+                            backgroundColor: '#e8e8e8',
+                            borderWidth: 0,
+                            width: '100%',
+                            marginTop: 10 , 
+                            borderRadius:5,
+                            textAlignVertical: 'top',
+                        }}
+                        placeholder="例) 竹取物語"
+                        multiline
+                        onContentSizeChange={(e)=>{
+                            setTitleBoxHeight(e.nativeEvent.contentSize.height);
+                        }}
+                        />
+                </View>
+                <View style={styles.writeScreen}>
+                    <View style={styles.itemView}>
+                        <Text style={styles.itemText}>文章</Text>
+                        <TouchableOpacity onPress={()=>
+                                setText('')
+                            }>
+                            <Text style={styles.clearButton}>✖</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TextInput style={{
+                            height: Math.max(40, textBoxHeight),
+                            backgroundColor: '#e8e8e8',
+                            borderWidth: 0,
+                            width: '100%',
+                            marginTop: 10 , 
+                            textAlignVertical: 'top',
+                        }}
+                        placeholder="例) 今は昔、竹取の翁と畏怖ものありけり…"
+                        value={text}
+                        onChangeText={(text)=>setText(text)}
+                        multiline
+                        onContentSizeChange={(e)=>{
+                            setTextBoxHeight(e.nativeEvent.contentSize.height);
+                        }}
+                    >
+                    </TextInput>
+                    </View>
+                    <Text style={{
+                        alignSelf:'flex-start',
+                        color:'#000000',
+                        marginLeft:15,
+                        }}>{text.length}文字 | 難易度:{GetDifficult(text.length)}</Text>
+                
+                <View style={styles.writeScreen}>
+                    <Text style={{fontSize:17,fontWeight:'bold'}}>読み取り設定</Text>
+                    <Text style={styles.itemText}>表示方法</Text>              
+                    <View style={{flexDirection:'row',
+                        alignSelf:'flex-start',
+                        justifyContent:'space-between',
+                        marginVertical:5,
+                        marginLeft:10,
+                        }}>
+                        <TouchableOpacity style={[styles.toggleButton,howToShow==='normal'&&styles.ON]}onPress={()=>
+                            setHowToShow('normal')
+                        }></TouchableOpacity>
+                        <Text style={{fontSize:20}}>通常表示</Text>
+                    </View>
+                    <View style={{flexDirection:'row',
+                        alignSelf:'flex-start',
+                        justifyContent:'space-between',
+                        marginVertical:5,
+                        marginLeft:10,
+                        }}>
+                        <TouchableOpacity style={[styles.toggleButton,howToShow==='word'&&styles.ON]} onPress={()=>
+                            setHowToShow('word')
+                        }></TouchableOpacity>
+                    <Text style={{fontSize:20}}>単語別表示</Text>
+                    </View>
+                </View>
+            </View>
+        </ScrollView>
+
     );
 }
 
@@ -113,12 +168,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: 25,
         color: '#fff',
         fontWeight: 'bold',
     },
     subTitle: {
-        fontSize: 12,
+        fontSize: 15,
         color: '#ccc',
     },
     button: {
@@ -132,13 +187,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 8,
         backgroundColor: '#2a2a4e',
-    },
+        },
     activeButton: {
         backgroundColor: '#ff8c00',
     },
     buttonText: {
         color: '#fff',
         fontWeight: 'bold',
+        fontSize: 16,
     },
     content: {
         flex: 1,
@@ -150,13 +206,46 @@ const styles = StyleSheet.create({
         alignItems:'center',
         marginLeft:10,
         marginRight:10,
-    },itemText:{
-        fontSize:16,
+        backgroundColor:'#e8f4f9ff',
+        borderRadius:5,
+        borderWidth:0,
+        borderColor:'#b0c4de',
+        marginVertical:10,
+        shadowColor:'#000',
+        shadowOffset:{width:1,height:2},
+        shadowRadius:5.84,
+        elevation:9,
+    },
+    itemView:{
+        flexDirection:'row',
+        alignItems:'center',
+        width:'100%',
+        justifyContent:'space-between',
+    },
+    itemText:{
+        fontSize:24,
         color:'#000',
         alignSelf:'flex-start',
-        marginTop:10
+        marginTop:10,
+        marginLeft:10,
+        fontWeight:'bold'
     },
-    textHolder:{
-           
-    }
+    clearButton: {
+        fontSize: 20,
+        color: 'red',
+        marginRight:10,
+        marginTop:10
+    },  
+    toggleButton:{
+        width:25,
+        height:25,
+        borderRadius:20,
+        borderWidth:2,
+        borderColor:'#555',
+        justifyContent:'center',
+        alignItems:'center',
+    },
+    ON:{
+        backgroundColor:'#0000ff'
+    },    
 });
