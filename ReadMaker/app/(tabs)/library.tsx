@@ -1,14 +1,17 @@
 import React,{ useState } from 'react';
-import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput,ScrollView } from 'react-native';
+import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput,ScrollView,Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import Slider from '@react-native-community/slider';
+import { useRouter } from 'expo-router';
 
 function WriteText() {
+    const router = useRouter();
     const [titleBoxHeight, setTitleBoxHeight] = useState(40);
     const [textBoxHeight, setTextBoxHeight] = useState(40);
     const [title, setTitle] = useState('');
     const [text, setText] = useState('');
     const [howToShow, setHowToShow] = useState('normal');
+    const [WPM, setWPM] = useState(300);
     function GetDifficult(length:number){
         switch(true){
             case length<50:
@@ -21,14 +24,27 @@ function WriteText() {
                 return '超上級';
         }
     }
+    function GameStart(){
+        if(title.length<1){
+            Alert.alert('タイトルを入力してください');
+            return;
+        }
+        if(text.length<1){
+            Alert.alert('文章を入力してください');
+            return;
+        }
+        router.push('(tabs)/display?mode=input')
+    }
     return (
         <ScrollView >
             <View>
                 <View style={styles.writeScreen}>        
                     <View style={styles.itemView}>
                         <Text style={styles.itemText}>タイトル</Text>
-                        <TouchableOpacity onPress={()=>
+                        <TouchableOpacity onPress={()=>{
                                 setTitle('')  
+                                setTitleBoxHeight(40)
+                            }
                             }>
                             <Text style={styles.clearButton}>✖</Text>
                         </TouchableOpacity>
@@ -39,12 +55,15 @@ function WriteText() {
                             backgroundColor: '#e8e8e8',
                             borderWidth: 0,
                             width: '100%',
+                            fontSize: 18,
                             marginTop: 10 , 
                             borderRadius:5,
                             textAlignVertical: 'top',
                         }}
+                        value={title}
                         placeholder="例) 竹取物語"
                         multiline
+                        onChangeText={(title)=>setTitle(title)}
                         onContentSizeChange={(e)=>{
                             setTitleBoxHeight(e.nativeEvent.contentSize.height);
                         }}
@@ -53,8 +72,10 @@ function WriteText() {
                 <View style={styles.writeScreen}>
                     <View style={styles.itemView}>
                         <Text style={styles.itemText}>文章</Text>
-                        <TouchableOpacity onPress={()=>
+                        <TouchableOpacity onPress={()=>{
                                 setText('')
+                                setTextBoxHeight(40)
+                            }
                             }>
                             <Text style={styles.clearButton}>✖</Text>
                         </TouchableOpacity>
@@ -64,6 +85,7 @@ function WriteText() {
                             backgroundColor: '#e8e8e8',
                             borderWidth: 0,
                             width: '100%',
+                            fontSize:18,
                             marginTop: 10 , 
                             textAlignVertical: 'top',
                         }}
@@ -76,15 +98,8 @@ function WriteText() {
                         }}
                     >
                     </TextInput>
-                    </View>
-                    <Text style={{
-                        alignSelf:'flex-start',
-                        color:'#000000',
-                        marginLeft:15,
-                        }}>{text.length}文字 | 難易度:{GetDifficult(text.length)}</Text>
-                
+                </View>
                 <View style={styles.writeScreen}>
-                    <Text style={{fontSize:17,fontWeight:'bold'}}>読み取り設定</Text>
                     <Text style={styles.itemText}>表示方法</Text>              
                     <View style={{flexDirection:'row',
                         alignSelf:'flex-start',
@@ -109,13 +124,62 @@ function WriteText() {
                     <Text style={{fontSize:20}}>単語別表示</Text>
                     </View>
                 </View>
+               
+                <View style={styles.writeScreen}>
+                    
+                        <Text style={styles.itemText}>読書速度</Text>
+                        <View style={{
+                        justifyContent:'space-between',
+                        flexDirection:'row',
+                    }}>
+                        <Text style={{fontSize:15,marginLeft:10}}>遅い</Text>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={100}
+                            maximumValue={400}
+                            minimumTrackTintColor="#8a46caff"
+                            maximumTrackTintColor="#ffe4bcff"
+                            thumbTintColor="#6565e7ff"
+                            onValueChange={(WPM) => setWPM(Math.round(WPM))}
+                        />
+                        <Text style={{fontSize:15,marginRight:10}}>速い</Text>
+                    </View>
+                    <Text>{WPM}WPM</Text>
+                    <View style={{flexDirection:'row',
+                        marginTop:20,
+                        marginLeft:10,
+                    }}>
+                        <View style={styles.expectView}>
+                            <Text style={{fontSize:20,alignSelf:'center'}}>予想時間</Text>
+                            <Text style={styles.expectText}>{Math.round(text.length/WPM)}分</Text>
+                        </View>
+                        <View style={styles.expectView}>
+                            <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
+                            <Text style={styles.expectText}>{GetDifficult(text.length)}</Text>
+                        </View>
+                    </View>
+                    
+                </View>
+                <TouchableOpacity onPress={()=>GameStart()}>
+                    <Text style={styles.startButton}>スタート</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
-
     );
 }
 
 function AozoraSelect() {
+    const [searchWord,setSearchWord]=useState('');
+    const url='https://www.aozorahack.net/api/v0.1/books?title=/さくら/'
+
+    const componentWillMount=()=>{
+        fetch(url)
+        .then((response)=>response.json())
+        .then((data)=>{
+            
+        })
+    }
+    
     return (
         <View style={styles.content}>
             <Text style={{ fontSize: 18 }}>Aozora Select Screen</Text>
@@ -168,9 +232,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     headerTitle: {
-        fontSize: 25,
+        fontSize: 30,
         color: '#fff',
         fontWeight: 'bold',
+        marginTop:15
     },
     subTitle: {
         fontSize: 15,
@@ -213,7 +278,7 @@ const styles = StyleSheet.create({
         marginVertical:10,
         shadowColor:'#000',
         shadowOffset:{width:1,height:2},
-        shadowRadius:5.84,
+        shadowRadius:5,
         elevation:9,
     },
     itemView:{
@@ -248,4 +313,38 @@ const styles = StyleSheet.create({
     ON:{
         backgroundColor:'#0000ff'
     },    
+    slider:{
+        width: '80%',
+        height: 20,
+        backgroundColor: '#f1bcbc',
+        borderRadius: 20,
+        marginTop: 10,
+    },
+    expectView:{
+        alignItems:'flex-start',
+        flexDirection:'column',
+        marginVertical:20,
+        marginHorizontal:10,
+        justifyContent:'flex-end',
+        backgroundColor:'#ffffff',
+        padding: 20,
+        borderRadius:20,
+        shadowColor:'#000',
+        shadowOffset:{width:1,height:2},
+        shadowRadius:5,
+        elevation:9,
+    },
+    expectText:{
+        fontSize: 50,
+    },
+    startButton:{
+        color: '#ffffff',
+        fontSize: 30,
+        backgroundColor: '#007AFF',
+        padding: 10,
+        borderRadius: 10,
+        alignSelf: 'center',
+        marginTop: 20,
+        marginBottom: 20,
+    }
 });
