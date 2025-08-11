@@ -2,6 +2,8 @@
 
 ReadMakerは、速読スキルの向上と読書習慣の形成を支援するReact Native + Expo Routerベースのモバイルアプリケーションです。
 
+高速形態素解析エンジン（Rust + Vibrato）を搭載し、日本語テキストの精密な解析による最適な速読体験を提供します。
+
 ## 🚀 主な機能
 
 ### 📱 アプリ構造（app/ディレクトリ）
@@ -53,11 +55,23 @@ src/
 
 ## 🛠 技術スタック
 
+### フロントエンド
 - **React Native**: 0.80.2
 - **Expo Router**: 5.1.4 - ファイルベースルーティング
 - **TypeScript**: 5.0.4 - 型安全性
 - **Expo Linear Gradient**: グラデーション背景
 - **Expo Vector Icons**: アイコンライブラリ
+
+### バックエンド・解析エンジン
+- **Rust**: 高速形態素解析エンジン
+- **Vibrato**: 最新の日本語形態素解析ライブラリ
+- **IPADIC辞書**: MeCab IPADIC 2.7.0対応
+- **C FFI**: React Nativeとの高速ブリッジ通信
+
+### 開発・ビルド
+- **Node.js**: 辞書変換スクリプト
+- **iconv-lite**: 文字エンコーディング変換
+- **Jest**: テストフレームワーク
 
 ## 📋 想定機能（開発予定）
 
@@ -83,21 +97,61 @@ src/
 
 ## 📝 開発状況
 
-- ✅ 基本的なExpo Router設定
-- ✅ ホーム画面のUI実装
-- ✅ タブナビゲーション
-- 🔲 速読機能の実装
-- 🔲 データ永続化
-- 🔲 青空文庫API連携
-- 🔲 詳細統計機能
+### ✅ 完了済み
+- **基本アプリ構造**: Expo Router設定、タブナビゲーション
+- **ホーム画面**: UI実装、統計表示、クイックアクション
+- **Rust形態素解析エンジン**: Vibrato + IPADIC辞書による高速解析
+- **辞書セットアップ**: 自動変換スクリプト（EUC-JP→UTF-8）
+- **C FFI Bridge**: React Nativeとの連携準備
+- **テスト環境**: ユニットテスト、統合テスト（全テストPASS）
+
+### � 進行中
+- **速読機能**: 形態素解析結果を活用した表示制御
+
+### 🔲 予定
+- **データ永続化**: 読書履歴、設定の保存
+- **青空文庫API連携**: 豊富なコンテンツライブラリ
+- **詳細統計機能**: WPM分析、理解度測定
+- **ユーザー設定**: カスタマイズ機能
 
 ---
 
-**クロスプラットフォーム対応** - iOS & Android
-**React Nativeによるネイティブパフォーマンス** - TypeScript完全対応
-**モダンなUI/UX** - グラデーションとアニメーション
+## 🔧 開発環境セットアップ
 
-# はじめに
+### 必要な環境
+- Node.js 18+
+- React Native開発環境
+- Rust（形態素解析エンジンのビルド用）
+
+### インストール
+```bash
+cd ReadMaker
+npm install
+```
+
+### 形態素解析エンジンのテスト
+```bash
+cd native/rust
+# 辞書パスを指定してテスト実行
+$env:READMAKER_DIC_PATH = "dictionaries\ipadic.vibrato"
+cargo test -- --nocapture
+```
+
+### 辞書の再構築（必要時のみ）
+```bash
+# MeCab辞書からVibrato辞書への変換
+npm run dic:build-lex
+# 出力: lex_utf8.csv, *_utf8.def
+
+# Vibrato辞書のコンパイル（vibrato CLIが必要）
+compile -l lex_utf8.csv -o dictionaries/ipadic.vibrato \
+  --unk unk_utf8.def --char char_utf8.def --matrix matrix_utf8.def
+```
+
+**クロスプラットフォーム対応** - iOS & Android  
+**React Nativeによるネイティブパフォーマンス** - TypeScript完全対応  
+**高速形態素解析** - Rust + Vibrato搭載  
+**モダンなUI/UX** - グラデーションとアニメーション
 
 > **注意**: 続行する前に、[環境セットアップ](https://reactnative.dev/docs/set-up-your-environment)ガイドを完了していることを確認してください。
 
