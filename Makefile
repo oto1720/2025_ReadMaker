@@ -1,22 +1,29 @@
 # ReadMaker Project Makefile
 # Docker環境とデータベース管理用コマンド
 
-.PHONY: help setup start stop restart logs clean db-connect db-backup db-restore
+.PHONY: help setup start stop restart logs clean db-connect db-backup db-restore rust-setup rust-dev rust-test rust-build api-logs rust-docker-build
 
 # デフォルトターゲット
 help:
 	@echo "ReadMaker Docker管理コマンド"
 	@echo ""
 	@echo "セットアップ & 起動:"
-	@echo "  make setup     - 初回セットアップ (PostgreSQL + pgAdmin4)"
-	@echo "  make start     - サービス起動"
-	@echo "  make stop      - サービス停止"
-	@echo "  make restart   - サービス再起動"
+	@echo "  make setup     - 初回セットアップ (PostgreSQL + pgAdmin4 + Rust API)"
+	@echo "  make start     - 全サービス起動"
+	@echo "  make stop      - 全サービス停止"
+	@echo "  make restart   - 全サービス再起動"
+	@echo ""
+	@echo "Rustバックエンド開発:"
+	@echo "  make rust-setup - Rust環境セットアップ確認"
+	@echo "  make rust-dev   - Rust開発サーバー起動 (ホットリロード)"
+	@echo "  make rust-test  - Rustテスト実行"
+	@echo "  make rust-build - Rustリリースビルド"
 	@echo ""
 	@echo "ログ & デバッグ:"
 	@echo "  make logs      - 全サービスログ表示"
 	@echo "  make logs-pg   - PostgreSQLログのみ表示"
 	@echo "  make logs-admin - pgAdminログのみ表示"
+	@echo "  make api-logs  - Rust APIログのみ表示"
 	@echo ""
 	@echo "データベース操作:"
 	@echo "  make db-connect  - PostgreSQLに直接接続"
@@ -28,6 +35,7 @@ help:
 	@echo "  make clean     - 全コンテナ・ボリューム削除"
 	@echo ""
 	@echo "アクセス情報:"
+	@echo "  Rust API: http://localhost:3000"
 	@echo "  pgAdmin4: http://localhost:8080"
 	@echo "  PostgreSQL: localhost:5432"
 
@@ -66,6 +74,10 @@ logs-pg:
 # pgAdminログのみ  
 logs-admin:
 	@docker-compose logs -f pgadmin
+
+# Rust APIログのみ
+api-logs:
+	@docker-compose logs -f api
 
 # データベース直接接続
 db-connect:
@@ -124,6 +136,54 @@ info:
 	@docker-compose ps
 	@echo ""
 	@echo "アクセス情報:"
+	@echo "  Rust API: http://localhost:3000"
 	@echo "  pgAdmin4: http://localhost:8080"
 	@echo "  PostgreSQL: localhost:5432"
 	@echo "  Redis: localhost:6379"
+
+# =================================
+# Rustバックエンド開発コマンド
+# =================================
+
+# Rust環境セットアップ確認
+rust-setup:
+	@echo "🦀 Rust環境セットアップ確認中..."
+	@if command -v rustc >/dev/null 2>&1; then \
+		echo "✅ Rust installed: $$(rustc --version)"; \
+	else \
+		echo "❌ Rustがインストールされていません"; \
+		echo "   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"; \
+		exit 1; \
+	fi
+	@cd backend && cargo check
+	@echo "✅ Rust環境セットアップ完了"
+
+# Rust開発サーバー起動 (ホットリロード)
+rust-dev:
+	@echo "🚀 Rust開発サーバー起動中..."
+	@if ! command -v cargo-watch >/dev/null 2>&1; then \
+		echo "📦 cargo-watchをインストール中..."; \
+		cargo install cargo-watch; \
+	fi
+	@echo "🔄 ホットリロード有効でAPIサーバーを起動..."
+	@echo "   データベースが起動していることを確認してください: make start"
+	@cd backend/api && cargo watch -x run
+
+# Rustテスト実行
+rust-test:
+	@echo "🧪 Rustテスト実行中..."
+	@cd backend && cargo test
+	@echo "✅ テスト完了"
+
+# Rustリリースビルド
+rust-build:
+	@echo "📦 Rustリリースビルド中..."
+	@cd backend && cargo build --release
+	@echo "✅ リリースビルド完了"
+	@echo "   バイナリ場所: backend/target/release/"
+
+# Docker環境でのRustビルド確認
+rust-docker-build:
+	@echo "🐳 DockerでRustビルド確認中..."
+	@docker-compose build api
+	@echo "✅ Dockerビルド完了"
