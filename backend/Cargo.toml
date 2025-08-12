@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = [
+    "api",
+    "core", 
+    "shared"
+]
+
+[workspace.dependencies]
+# Web フレームワーク
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+
+# データベース
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "uuid", "chrono"] }
+
+# 認証・セキュリティ
+jsonwebtoken = "9.0"
+bcrypt = "0.15"
+uuid = { version = "1.0", features = ["v4"] }
+
+# シリアライゼーション
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 設定管理
+config = "0.14"
+dotenvy = "0.15"
+
+# ログ
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# 時刻処理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 形態素解析
+vibrato = { version = "0.5", features = ["train"] }
+zstd = "0.13"

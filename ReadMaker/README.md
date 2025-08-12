@@ -1,45 +1,174 @@
-# ReadMaker
+# ReadMaker - 速読マスターアプリ
 
-## ディレクトリー構造
-ReadMaker/
-├── src/                   # ソースコード
-│   ├── components/        # 再利用可能コンポーネント
-│   ├── screens/           # 画面コンポーネント
-│   ├── navigation/        # ナビゲーション設定
-│   ├── services/          # API呼び出し・外部サービス
-│   ├── hooks/             # カスタムフック
-│   ├── utils/             # ユーティリティ関数
-│   ├── constants/         # 定数
-│   ├── types/             # TypeScript型定義
-│   └── assets/            # 画像・フォント等
-└── app.json
+ReadMakerは、速読スキルの向上と読書習慣の形成を支援するReact Native + Expo Routerベースのモバイルアプリケーションです。
 
-## 機能
+高速形態素解析エンジン（Rust + Vibrato）を搭載し、日本語テキストの精密な解析による最適な速読体験を提供します。
 
-- クロスプラットフォーム対応（iOS & Android）
-- React Nativeによるネイティブパフォーマンス
-- 包括的な型安全性を備えたモダンなTypeScriptコードベース
-- ダーク・ライトモード対応のレスポンシブデザイン
-- 迅速な開発のためのホットリロード機能
+## 🚀 主な機能
 
-このプロジェクトは[`@react-native-community/cli`](https://github.com/react-native-community/cli)を使用してブートストラップされました。
+### 📱 アプリ構造（app/ディレクトリ）
 
-# はじめに
+#### ルーティング構造
+- **`app/index.tsx`**: アプリのエントリーポイント - ホーム画面にリダイレクト
+- **`app/_layout.tsx`**: ルートレイアウト - Stackナビゲーション（タブとリーダー画面）
+- **`app/reader`**: 他の画面（ボトムナビゲーション以外の画面）
+- **`app/(tabs)/_layout.tsx`**: タブナビゲーションレイアウト - ホームがデフォルト画面
+
+#### ホーム画面（`app/(tabs)/home.tsx`）
+メインのダッシュボード画面として以下の機能を提供：
+
+**📊 ユーザー統計表示**
+- 読了冊数の追跡
+- 平均WPM（Words Per Minute）の表示
+- 総読書時間の記録
+- 現在のレベルとポイントシステム
+- 今日の読書時間
+
+**⚡ クイックアクション**
+- **クイックスタート**: デモテキストで即座に速読練習開始
+- **テキスト入力**: ユーザーがコピー&ペーストしたテキストで練習
+- **小説選択**: 青空文庫から小説を選んで読書
+
+**🏆 ゲーミフィケーション要素**
+- レベルシステム（経験値とレベル進行）
+- 実績・バッジシステム（スピードリーダー、継続は力なり等）
+- 読書習慣トラッキング（連続日数カウント）
+
+**🎨 UI/UX特徴**
+- グラデーション背景とモダンなデザイン
+- Ioniconsを使用したアイコン
+- カード型レイアウト
+- 統計情報の視覚化
+
+### 📁 ソース構造（src/ディレクトリ）
+現在は以下のディレクトリ構造が準備されています（開発用の骨組み）：
+
+```
+src/
+├── assets/      # 画像、フォント等のリソース
+├── components/  # 再利用可能なUIコンポーネント
+├── constnts/    # アプリ定数（設定値等）
+├── hooks/       # カスタムReactフック
+├── services/    # API通信、データ処理サービス
+├── types/       # TypeScript型定義
+└── utils/       # ユーティリティ関数
+```
+
+## 🛠 技術スタック
+
+### フロントエンド
+- **React Native**: 0.80.2
+- **Expo Router**: 5.1.4 - ファイルベースルーティング
+- **TypeScript**: 5.0.4 - 型安全性
+- **Expo Linear Gradient**: グラデーション背景
+- **Expo Vector Icons**: アイコンライブラリ
+
+### バックエンド・解析エンジン
+- **Rust**: 高速形態素解析エンジン
+- **Vibrato**: 最新の日本語形態素解析ライブラリ
+- **IPADIC辞書**: MeCab IPADIC 2.7.0対応
+- **C FFI**: React Nativeとの高速ブリッジ通信
+
+### 開発・ビルド
+- **Node.js**: 辞書変換スクリプト
+- **iconv-lite**: 文字エンコーディング変換
+- **Jest**: テストフレームワーク
+
+## 📋 想定機能（開発予定）
+
+1. **速読練習モード**
+   - 文字表示速度調整
+   - WPM測定機能
+   - 理解度テスト
+
+2. **読書管理**
+   - 読書履歴追跡
+   - 青空文庫連携
+   - ブックマーク機能
+
+3. **進捗管理**
+   - 統計ダッシュボード
+   - 目標設定機能
+   - 習慣トラッキング
+
+4. **ユーザー設定**
+   - 表示設定カスタマイズ
+   - 読書速度設定
+   - 通知設定
+
+## 📝 開発状況
+
+### ✅ 完了済み
+- **基本アプリ構造**: Expo Router設定、タブナビゲーション
+- **ホーム画面**: UI実装、統計表示、クイックアクション
+- **Rust形態素解析エンジン**: Vibrato + IPADIC辞書による高速解析
+- **辞書セットアップ**: 自動変換スクリプト（EUC-JP→UTF-8）
+- **C FFI Bridge**: React Nativeとの連携準備
+- **テスト環境**: ユニットテスト、統合テスト（全テストPASS）
+
+### � 進行中
+- **速読機能**: 形態素解析結果を活用した表示制御
+
+### 🔲 予定
+- **データ永続化**: 読書履歴、設定の保存
+- **青空文庫API連携**: 豊富なコンテンツライブラリ
+- **詳細統計機能**: WPM分析、理解度測定
+- **ユーザー設定**: カスタマイズ機能
+
+---
+
+## 🔧 開発環境セットアップ
+
+### 必要な環境
+- Node.js 18+
+- React Native開発環境
+- Rust（形態素解析エンジンのビルド用）
+
+### インストール
+```bash
+cd ReadMaker
+npm install
+```
+
+### 形態素解析エンジンのテスト
+```bash
+cd native/rust
+# 辞書パスを指定してテスト実行
+$env:READMAKER_DIC_PATH = "dictionaries\ipadic.vibrato"
+cargo test -- --nocapture
+```
+
+### 辞書の再構築（必要時のみ）
+```bash
+# MeCab辞書からVibrato辞書への変換
+npm run dic:build-lex
+# 出力: lex_utf8.csv, *_utf8.def
+
+# Vibrato辞書のコンパイル（vibrato CLIが必要）
+compile -l lex_utf8.csv -o dictionaries/ipadic.vibrato \
+  --unk unk_utf8.def --char char_utf8.def --matrix matrix_utf8.def
+```
+
+**クロスプラットフォーム対応** - iOS & Android  
+**React Nativeによるネイティブパフォーマンス** - TypeScript完全対応  
+**高速形態素解析** - Rust + Vibrato搭載  
+**モダンなUI/UX** - グラデーションとアニメーション
 
 > **注意**: 続行する前に、[環境セットアップ](https://reactnative.dev/docs/set-up-your-environment)ガイドを完了していることを確認してください。
 
-## ステップ1: Metroの起動
+## 🚀 開発・起動方法
 
-まず、React NativeのJavaScriptビルドツールである**Metro**を実行する必要があります。
+### 依存関係のインストール
+```bash
+npm install
+```
 
-Metro開発サーバーを起動するには、React Nativeプロジェクトのルートから以下のコマンドを実行してください：
-
-```sh
-# npmを使用
+### 開発サーバー起動
+```bash
+# Expoを使用
 npm start
-
-# またはYarnを使用
-yarn start
+# または
+npx expo start
 ```
 
 ## ステップ2: アプリのビルドと実行

@@ -1,0 +1,27 @@
+[package]
+name = "readmaker-core"
+version = "0.1.0"
+edition = "2021"
+
+# React Native用ライブラリ出力設定
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+vibrato = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+zstd = { workspace = true }
+readmaker-shared = { path = "../shared" }
+
+# FFI用
+[dependencies.libc]
+version = "0.2"
+optional = true
+
+[features]
+default = []
+# React Native FFI用
+ffi = ["libc"]
+# 辞書ビルド用
+build-tools = []
