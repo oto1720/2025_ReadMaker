@@ -19,8 +19,7 @@
     "expo-router": "^5.1.4",
     "expo-status-bar": "^2.2.3",
     "react": "19.1.0",
-    "react-native": "0.80.2",
-    "react-native-dotenv": "^3.4.11"
+    "react-native": "0.80.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
