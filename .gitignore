@@ -14,3 +14,10 @@ Thumbs.db
 lex_utf8.csv
 *.vibrato
 *.zst
+
+# Rust build artifacts
+backend/target/
+backend/Cargo.lock
+
+# Development tool caches
+.serena/cache/
