@@ -1,5 +1,8 @@
 # マルチステージビルドでバイナリサイズを最適化
-FROM rust:1.75-slim as builder
+FROM rust:latest AS builder
+
+# ベースイメージによりますが、一般的にはrustupを使います
+RUN rustup update stable
 
 # 必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
