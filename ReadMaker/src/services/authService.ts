@@ -1,5 +1,5 @@
 import ApiClient from './api';
-import { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/auth';
+import { LoginRequest, RegisterRequest, AuthResponse, User, ApiResponse } from '../types/auth';
 
 class AuthService {
   private static instance: AuthService;
@@ -76,14 +76,12 @@ class AuthService {
   }
 
   /**
-   * 現在のユーザー情報取得（将来の機能）
+   * 現在のユーザー情報取得
    */
   async getCurrentUser(): Promise<User | null> {
     try {
-      // TODO: /auth/me エンドポイントを実装したら使用
-      // const response = await ApiClient.get<ApiResponse<User>>('/auth/me');
-      // return response.success ? response.data || null : null;
-      return null;
+      const response = await ApiClient.get<ApiResponse<User>>('/auth/me');
+      return response.success ? response.data || null : null;
     } catch (error) {
       console.error('Get current user error:', error);
       return null;
