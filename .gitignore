@@ -9,7 +9,8 @@
 Thumbs.db
 .vscode/
 .idea/
-
+.env
+.env.docker
 # Large temporary artifacts (root)
 lex_utf8.csv
 *.vibrato
