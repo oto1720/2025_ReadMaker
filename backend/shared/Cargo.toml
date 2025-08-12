@@ -9,4 +9,5 @@ serde_json = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 chrono = { workspace = true }
 sqlx = { workspace = true }
+jsonwebtoken = { workspace = true }
 thiserror = "1.0"
