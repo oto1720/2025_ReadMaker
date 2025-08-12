@@ -1,16 +1,14 @@
 use axum::{
     extract::Extension,
-    http::StatusCode,
-    response::Json,
-    routing::{get, post},
+    routing::get,
     Router,
 };
-use serde_json::{json, Value};
-use sqlx::PgPool;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tracing::{info, Level};
 use tracing_subscriber;
+use readmaker_shared::JwtService;
 
 mod routes;
 mod middleware;
@@ -38,6 +36,9 @@ async fn main() {
         .await
         .expect("データベース接続に失敗しました");
 
+    // JWT サービス初期化
+    let jwt_service = Arc::new(JwtService::new(&config.jwt_secret));
+
     // ルーター設定
     let app = Router::new()
         .route("/health", get(health::health_check))
@@ -45,7 +46,8 @@ async fn main() {
         .nest("/users", users::routes())
         .nest("/reading", reading::routes())
         .layer(CorsLayer::permissive())
-        .layer(Extension(db.pool()));
+        .layer(Extension(db.pool()))
+        .layer(Extension(jwt_service));
 
     // サーバー起動
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
