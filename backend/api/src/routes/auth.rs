@@ -1,13 +1,15 @@
 use axum::{
-    routing::post,
+    routing::{post, get},
     Router, Json, http::StatusCode,
     extract::Extension,
     response::Json as ResponseJson,
+    middleware,
 };
 use serde::{Serialize};
 use sqlx::PgPool;
 use readmaker_shared::{JwtService, create_success_response, create_error_response};
 use crate::models::{User, CreateUserRequest, LoginRequest, UserResponse};
+use crate::middleware::auth::{AuthState, auth_middleware};
 use std::sync::Arc;
 
 #[derive(Serialize)]
@@ -20,6 +22,7 @@ pub fn routes() -> Router {
     Router::new()
         .route("/login", post(login))
         .route("/register", post(register))
+        .route("/me", get(get_current_user).layer(middleware::from_fn(auth_middleware)))
 }
 
 async fn login(
@@ -84,6 +87,22 @@ async fn register(
                 _ => "アカウント作成に失敗しました".to_string(),
             };
             Ok(ResponseJson(serde_json::to_value(create_error_response::<()>(error_msg)).unwrap()))
+        }
+    }
+}
+
+async fn get_current_user(
+    Extension(pool): Extension<PgPool>,
+    Extension(auth_state): Extension<AuthState>,
+) -> Result<ResponseJson<serde_json::Value>, StatusCode> {
+    match User::find_by_id(&pool, auth_state.user_id).await {
+        Ok(user) => {
+            let user_response: UserResponse = user.into();
+            Ok(ResponseJson(serde_json::to_value(create_success_response(user_response)).unwrap()))
+        }
+        Err(e) => {
+            tracing::error!("ユーザー情報取得エラー: {}", e);
+            Ok(ResponseJson(serde_json::to_value(create_error_response::<()>("ユーザー情報の取得に失敗しました".to_string())).unwrap()))
         }
     }
 }
