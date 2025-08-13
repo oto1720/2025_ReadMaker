@@ -14,7 +14,6 @@ import { Text,
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import {api} from '../api/api'; // Assuming you have an api file for fetching data
 import axios from 'axios';
 import Constants from 'expo-constants';
 
@@ -224,10 +223,13 @@ function AozoraSelect() {
           <>
             <Text>{item.title}</Text>
             {item.urlToImage && (
+                <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10}}>
               <Image
                 source={{ uri: item.urlToImage }}
                 style={{ width: 200, height: 120 }}
               />
+              <Text style={{width:'45%',marginLeft:10}}>{item.description}</Text>
+                </View>
             )}
           </>
         )}
