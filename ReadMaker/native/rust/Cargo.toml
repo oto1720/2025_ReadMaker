@@ -3,6 +3,11 @@ name = "readmaker-rust"
 version = "0.1.0"
 edition = "2021"
 
+# 追加機能フラグ
+[features]
+# 辞書ビルドなどの開発用ツールを有効化するためのフラグ（通常ビルドでは無効）
+build-tools = []
+
 # React Native用ライブラリ出力設定
 [lib]
 name = "readmaker_core"
@@ -20,8 +25,17 @@ path = "extract_dict.rs"
 name = "test_bridge"
 path = "test_bridge.rs"
 
+[[bin]]
+name = "benchmark"
+path = "src/benchmark.rs"
+
+[[bin]]
+name = "compile_dict"
+path = "src/compile_dict.rs"
+required-features = ["build-tools"]
+
 [dependencies]
-vibrato = "0.5"
+vibrato = { version = "0.5", features = ["train"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 zstd = "0.13"
