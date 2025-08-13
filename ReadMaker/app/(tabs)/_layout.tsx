@@ -27,6 +27,15 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="ranking"
+        options={{
+          title: 'ランキング',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="trophy" size={24} color={color} />
+          ),
+        }}
+      />
 
         </Tabs>
     )
