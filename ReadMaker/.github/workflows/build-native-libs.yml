@@ -1,0 +1,172 @@
+name: Build Native Libraries
+
+on:
+  push:
+    branches: [ main, feature/* ]
+    paths:
+      - 'native/rust/**'
+      - '.github/workflows/build-native-libs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'native/rust/**'
+  workflow_dispatch:  # 手動実行可能
+
+jobs:
+  build-android:
+    name: Build Android Libraries
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+    
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r27
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          native/rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('native/rust/Cargo.lock') }}
+    
+    - name: Build Android ARM64
+      working-directory: native/rust
+      env:
+        READMAKER_DIC_PATH: "dictionaries/ipadic.vibrato"
+        CC_aarch64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
+        CXX_aarch64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++"
+        AR_aarch64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
+        CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
+      run: cargo build --target aarch64-linux-android --release
+    
+    - name: Build Android ARM32
+      working-directory: native/rust
+      env:
+        READMAKER_DIC_PATH: "dictionaries/ipadic.vibrato"
+        CC_armv7_linux_androideabi: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang"
+        CXX_armv7_linux_androideabi: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++"
+        AR_armv7_linux_androideabi: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
+        CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang"
+      run: cargo build --target armv7-linux-androideabi --release
+    
+    - name: Build Android x86_64
+      working-directory: native/rust
+      env:
+        READMAKER_DIC_PATH: "dictionaries/ipadic.vibrato"
+        CC_x86_64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang"
+        CXX_x86_64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang++"
+        AR_x86_64_linux_android: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
+        CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER: "${{ env.ANDROID_NDK_ROOT }}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang"
+      run: cargo build --target x86_64-linux-android --release
+    
+    - name: Copy Android libraries to jniLibs
+      run: |
+        mkdir -p android/app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86_64}
+        cp native/rust/target/aarch64-linux-android/release/deps/libreadmaker_core.so android/app/src/main/jniLibs/arm64-v8a/
+        cp native/rust/target/armv7-linux-androideabi/release/deps/libreadmaker_core.so android/app/src/main/jniLibs/armeabi-v7a/
+        cp native/rust/target/x86_64-linux-android/release/deps/libreadmaker_core.so android/app/src/main/jniLibs/x86_64/
+    
+    - name: Upload Android artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-native-libs
+        path: android/app/src/main/jniLibs/
+
+  build-ios:
+    name: Build iOS Libraries
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-apple-ios,x86_64-apple-ios
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          native/rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('native/rust/Cargo.lock') }}
+    
+    - name: Build iOS ARM64 (Device)
+      working-directory: native/rust
+      env:
+        READMAKER_DIC_PATH: "dictionaries/ipadic.vibrato"
+      run: cargo build --target aarch64-apple-ios --release
+    
+    - name: Build iOS x86_64 (Simulator)
+      working-directory: native/rust
+      env:
+        READMAKER_DIC_PATH: "dictionaries/ipadic.vibrato"
+      run: cargo build --target x86_64-apple-ios --release
+    
+    - name: Create universal iOS library
+      working-directory: native/rust
+      run: |
+        mkdir -p ios-libs
+        lipo -create \
+          target/aarch64-apple-ios/release/libreadmaker_core.a \
+          target/x86_64-apple-ios/release/libreadmaker_core.a \
+          -output ios-libs/libreadmaker_core.a
+    
+    - name: Upload iOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ios-native-libs
+        path: native/rust/ios-libs/
+
+  commit-libs:
+    name: Commit Built Libraries
+    runs-on: ubuntu-latest
+    needs: [build-android, build-ios]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/')
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Download Android artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: android-native-libs
+        path: android/app/src/main/jniLibs/
+    
+    - name: Download iOS artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: ios-native-libs
+        path: ios/ReadMaker/
+    
+    - name: Check for changes
+      id: changes
+      run: |
+        git add android/app/src/main/jniLibs/ ios/ReadMaker/libreadmaker_core.a
+        if git diff --cached --quiet; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Commit and push
+      if: steps.changes.outputs.changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "🤖 Auto-update native libraries [skip ci]"
+        git push
