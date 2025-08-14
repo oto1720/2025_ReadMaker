@@ -14,7 +14,6 @@ import { Text,
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import {api} from '../api/api'; // Assuming you have an api file for fetching data
 import axios from 'axios';
 import Constants from 'expo-constants';
 
@@ -188,54 +187,238 @@ function AozoraSelect() {
   source: {
     id: string | null;
     name: string;
-  };
+    };
   author: string | null;
   title: string;
   description: string;
   url: string;
-  urlToImage: string | null;
+  image_url: string | null;
   publishedAt: string;
   content: string;
-};
-
+    };
+    
+    const [seachWord,setSeachWord] =useState('');
     const [articles, setArticles] = useState<Article[]>([]);
-    const url = 'https://newsapi.org/v2/everything?q=google';
+    const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+    const url = `https://newsdata.io/api/1/news?apikey=pub_36db2c557766462dac0779c2e16416ac&language=ja&q=とまと`;
+
+    const router = useRouter();
+    const [titleBoxHeight, setTitleBoxHeight] = useState(40);
+    const [textBoxHeight, setTextBoxHeight] = useState(40);
+    const [title, setTitle] = useState('');
+    const [text, setText] = useState('');
+    const [howToShow, setHowToShow] = useState('normal');
+    const [WPM, setWPM] = useState(300);
+    const [showNews, setShowNews] = useState(false);
+    const [showNewsPlace, setShowNewsPlace] = useState(false);
+    function GetDifficult(length:number){
+        switch(true){
+            case length<50:
+                return '初級';
+            case length<200:
+                return '中級';
+            case length<400:
+                return '上級';
+            case length>=400:
+                return '超上級';
+        }
+    }
+    function GameStart(){
+        if(title.length<1){
+            Alert.alert('タイトルを入力してください');
+            return;
+        }
+        if(text.length<1){
+            Alert.alert('文章を入力してください');
+            return;
+        }
+        router.push('(tabs)/display?mode=input')
+    }
+  function NewsPlace(){
+    console.log("tomatotmato");
+    return (
+        <ScrollView >
+            <View>
+                <View style={styles.writeScreen}>        
+                    <View style={styles.itemView}>
+                        <Text style={styles.itemText}>タイトル</Text>
+                        <TouchableOpacity onPress={()=>{
+                                setTitle('')  
+                                setTitleBoxHeight(40)
+                            }
+                            }>
+                            <Text style={styles.clearButton}>✖</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TextInput
+                        style={{
+                            height: Math.max(40, titleBoxHeight),
+                            backgroundColor: '#e8e8e8',
+                            borderWidth: 0,
+                            width: '100%',
+                            fontSize: 18,
+                            marginTop: 10 , 
+                            borderRadius:5,
+                            textAlignVertical: 'top',
+                        }}
+                        value={title}
+                        placeholder={selectedArticle? selectedArticle.title :''}
+                        multiline
+                        onChangeText={(title)=>setTitle(title)}
+                        onContentSizeChange={(e)=>{
+                            setTitleBoxHeight(e.nativeEvent.contentSize.height);
+                        }}
+                        />
+                </View>
+                <View style={styles.writeScreen}>
+                    <View style={styles.itemView}>
+                        <Text style={styles.itemText}>文章</Text>
+                        <TouchableOpacity onPress={()=>{
+                                setText('')
+                                setTextBoxHeight(40)
+                            }
+                            }>
+                            <Text style={styles.clearButton}>✖</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TextInput style={{
+                            height: Math.max(40, textBoxHeight),
+                            backgroundColor: '#e8e8e8',
+                            borderWidth: 0,
+                            width: '100%',
+                            fontSize:18,
+                            marginTop: 10 , 
+                            textAlignVertical: 'top',
+                        }}
+                        placeholder={selectedArticle? selectedArticle.description :''}
+                        value={text}
+                        onChangeText={(text)=>setText(text)}
+                        multiline
+                        onContentSizeChange={(e)=>{
+                            setTextBoxHeight(e.nativeEvent.contentSize.height);
+                        }}
+                    >
+                    </TextInput>
+                </View>
+                <View style={styles.writeScreen}>
+                    <Text style={styles.itemText}>表示方法</Text>              
+                    <View style={{flexDirection:'row',
+                        alignSelf:'flex-start',
+                        justifyContent:'space-between',
+                        marginVertical:5,
+                        marginLeft:10,
+                        }}>
+                        <TouchableOpacity style={[styles.toggleButton,howToShow==='normal'&&styles.ON]}onPress={()=>
+                            setHowToShow('normal')
+                        }></TouchableOpacity>
+                        <Text style={{fontSize:20}}>通常表示</Text>
+                    </View>
+                    <View style={{flexDirection:'row',
+                        alignSelf:'flex-start',
+                        justifyContent:'space-between',
+                        marginVertical:5,
+                        marginLeft:10,
+                        }}>
+                        <TouchableOpacity style={[styles.toggleButton,howToShow==='word'&&styles.ON]} onPress={()=>
+                            setHowToShow('word')
+                        }></TouchableOpacity>
+                    <Text style={{fontSize:20}}>単語別表示</Text>
+                    </View>
+                </View>
+               
+                <View style={styles.writeScreen}>
+                    
+                        <Text style={styles.itemText}>読書速度</Text>
+                        <View style={{
+                        justifyContent:'space-between',
+                        flexDirection:'row',
+                    }}>
+                        <Text style={{fontSize:15,marginLeft:10}}>遅い</Text>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={100}
+                            maximumValue={400}
+                            minimumTrackTintColor="#8a46caff"
+                            maximumTrackTintColor="#ffe4bcff"
+                            thumbTintColor="#6565e7ff"
+                            onValueChange={(WPM) => setWPM(Math.round(WPM))}
+                        />
+                        <Text style={{fontSize:15,marginRight:10}}>速い</Text>
+                    </View>
+                    <Text>{WPM}WPM</Text>
+                    <View style={{flexDirection:'row',
+                        marginTop:20,
+                        marginLeft:10,
+                    }}>
+                        <View style={styles.expectView}>
+                            <Text style={{fontSize:20,alignSelf:'center'}}>予想時間</Text>
+                            <Text style={styles.expectText}>{Math.round(text.length/WPM)}分</Text>
+                        </View>
+                        <View style={styles.expectView}>
+                            <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
+                            <Text style={styles.expectText}>{GetDifficult(text.length)}</Text>
+                        </View>
+                    </View>
+                    
+                </View>
+                <TouchableOpacity onPress={()=>GameStart()}>
+                    <Text style={styles.startButton}>スタート</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
+    );
+}
+if (showNewsPlace) {
+    return <NewsPlace />;
+  }
   const getArticles = async () => {
     try {
       const res = await axios.get(
-        `${url}`+`&apiKey=`+`${API_KEY}` // 環境変数からAPIキーを取得
+        `${url}`
       );
-      setArticles(res.data.articles);
+      const filterRes=res.data.results.filter((article:Article)=>article.description!==null&&article.description.trim()!=='');
+      setArticles(filterRes);
+      console.log("tomato");
+      setShowNews(true);
     } catch (error) {
       console.log(error);
     }
   };
-
-  useEffect(() => {
-    getArticles();
-  }, []);
-
   return (
-    <SafeAreaView>
-     
-      <FlatList
+    <View style={{flexDirection:'column'}}>
+        <View style={{flexDirection:'row'}}>
+                <TextInput
+                    placeholder='検索ワードを入力'
+                    value={seachWord}
+                    onChangeText={(text)=>setSeachWord(text)}
+                >
+                </TextInput>
+                <TouchableOpacity onPress={() => getArticles()}>
+                    <Text style={{borderWidth:1,borderColor:'#000',}}>検索</Text>
+                </TouchableOpacity>
+        </View>
+
+        <FlatList
         data={articles}
         renderItem={({ item }) => (
-          <>
+          <TouchableOpacity onPress={NewsPlace}>
             <Text>{item.title}</Text>
-            {item.urlToImage && (
+            {item.image_url && (
+                <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10}}>
               <Image
-                source={{ uri: item.urlToImage }}
+                source={{ uri: item.image_url }}
                 style={{ width: 200, height: 120 }}
               />
+              <Text style={{width:'45%',marginLeft:10}}>{item.description}</Text>
+                </View>
             )}
-          </>
+          </TouchableOpacity>
         )}
         keyExtractor={(item) => item.url} // idがないのでURLを使用
       />
-    </SafeAreaView>
-  );
-
+         
+    </View>
+  )
 };
 
 export default function TextSelectScreen(){
