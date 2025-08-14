@@ -1,0 +1,25 @@
+# Root-level ignores
+
+# Build outputs
+/dist/
+/build/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# 環境設定ファイル (注意: 機密情報を含む可能性があるので、コミットしないように注意！)
+.env
+.env.docker
+# Large temporary artifacts (root)
+lex_utf8.csv
+*.vibrato
+*.zst
+
+# Rust build artifacts
+backend/target/
+backend/Cargo.lock
+
+# Development tool caches
+.serena/cache/

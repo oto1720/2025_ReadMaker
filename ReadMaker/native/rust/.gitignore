@@ -7,6 +7,8 @@ Cargo.lock
 dictionaries/
 *.dic
 *.dic.zst
+!dictionaries/ipadic.vibrato
+!dictionaries/README.md
 
 # IDE files
 .vscode/

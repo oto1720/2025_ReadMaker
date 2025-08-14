@@ -15,12 +15,33 @@ fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
     // 辞書ファイルパス（環境変数で上書き可能）
     // READMAKER_DIC_PATH が設定されていればそれを使用、なければ既定の相対パス
     let dict_path = env::var("READMAKER_DIC_PATH")
-        .unwrap_or_else(|_| "dictionaries/ipadic-mecab-2_7_0/system.dic".to_string());
+        .unwrap_or_else(|_| "dictionaries/ipadic.vibrato".to_string());
     
-    // 辞書ファイルの読み込み
-    let dict_file = File::open(dict_path)?;
-    let dict = Dictionary::read(dict_file)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?;
+    // 辞書ファイルの読み込み（zstd圧縮/非圧縮の両対応）
+    let dict = {
+        let dict_file = File::open(&dict_path)?;
+        // 1) zstd圧縮として読み込みを試す
+        match zstd::stream::read::Decoder::new(dict_file) {
+            Ok(mut decoder) => {
+                match Dictionary::read(&mut decoder) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        // 2) 失敗したら非圧縮として再試行
+                        eprintln!("[Vibrato] zstd解凍読み込み失敗: {} -> 生読み込み再試行", e);
+                        let raw_file = File::open(&dict_path)?;
+                        Dictionary::read(raw_file)
+                            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
+                    }
+                }
+            }
+            Err(_) => {
+                // zstdとして開けなかった場合は非圧縮としてそのまま読む
+                let raw_file = File::open(&dict_path)?;
+                Dictionary::read(raw_file)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
+            }
+        }
+    };
     
     // トークナイザーの作成
     let tokenizer = Tokenizer::new(dict);
@@ -53,7 +74,10 @@ pub fn analyze_text(input: &str) -> Vec<String> {
     // Vibrato実装を試し、エラー時はフォールバック
     match vibrato_analyze_text(input) {
         Ok(words) => words,
-        Err(_) => analyze_text_fallback(input),
+        Err(e) => {
+            eprintln!("[Vibrato] 解析エラー: {}", e);
+            analyze_text_fallback(input)
+        }
     }
 }
 
@@ -133,6 +157,9 @@ mod tests {
         
         let result_cstr = unsafe { CStr::from_ptr(result_ptr) };
         let result_str = result_cstr.to_str().unwrap();
+        
+        // デバッグ出力追加
+        println!("形態素解析結果: {}", result_str);
         
         // JSON配列形式かチェック
         assert!(result_str.starts_with('['));

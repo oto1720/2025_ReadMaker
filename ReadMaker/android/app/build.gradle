@@ -85,6 +85,14 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    
+    // Rustライブラリの設定: 生成済みの *.so を src/main/jniLibs に配置して同梱
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+    
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
