@@ -72,7 +72,23 @@ git clone https://github.com/oto1720/2025_ReadMaker.git
 cd 2025_ReadMaker
 ```
 
-### 2. バックエンド起動
+### 2. 環境変数の設定
+```bash
+# ローカル開発用環境変数
+cp .env.example .env
+
+# Docker環境用環境変数
+cp .env.docker.example .env.docker
+
+# JWT_SECRETを安全な値に更新（両ファイル）
+openssl rand -hex 32
+```
+
+**重要：** `.env`と`.env.docker`の違い
+- `.env` → ローカル開発（`localhost`で接続）
+- `.env.docker` → Docker環境（コンテナ名で接続）
+
+### 3. バックエンド起動
 ```bash
 # データベース・Redis起動
 make setup
@@ -81,14 +97,14 @@ make setup
 make rust-dev
 ```
 
-### 3. フロントエンド起動
+### 4. フロントエンド起動
 ```bash
 cd ReadMaker
 npm install
 npm start
 ```
 
-### 4. アプリアクセス
+### 5. アプリアクセス
 - **Rust API**: http://localhost:3000
 - **pgAdmin4**: http://localhost:8080
 - **Expo Dev**: QRコードでスマートフォンアクセス
