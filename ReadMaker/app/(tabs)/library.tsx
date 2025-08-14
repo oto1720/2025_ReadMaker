@@ -1,9 +1,23 @@
-import React,{ useState } from 'react';
-import { Text,View,StyleSheet,StatusBar,TouchableOpacity,TextInput,ScrollView,Alert } from 'react-native';
+import React,{ useState,useEffect } from 'react';
+import { Text,
+    View,
+    StyleSheet,
+    StatusBar,
+    TouchableOpacity,
+    TextInput,
+    ScrollView,
+    Alert,
+    FlatList,
+    SafeAreaView,
+    Image,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
+import axios from 'axios';
+import Constants from 'expo-constants';
 
+const API_KEY=Constants.expoConfig?.extra?.NEWS_APIKEY;
 function WriteText() {
     const router = useRouter();
     const [titleBoxHeight, setTitleBoxHeight] = useState(40);
@@ -169,23 +183,62 @@ function WriteText() {
 }
 
 function AozoraSelect() {
-    const [searchWord,setSearchWord]=useState('');
-    const url='https://www.aozorahack.net/api/v0.1/books?title=/さくら/'
+    type Article = {
+  source: {
+    id: string | null;
+    name: string;
+  };
+  author: string | null;
+  title: string;
+  description: string;
+  url: string;
+  urlToImage: string | null;
+  publishedAt: string;
+  content: string;
+};
 
-    const componentWillMount=()=>{
-        fetch(url)
-        .then((response)=>response.json())
-        .then((data)=>{
-            
-        })
+    const [articles, setArticles] = useState<Article[]>([]);
+    const url = 'https://newsapi.org/v2/everything?q=google';
+  const getArticles = async () => {
+    try {
+      const res = await axios.get(
+        `${url}`+`&apiKey=`+`${API_KEY}` // 環境変数からAPIキーを取得
+      );
+      setArticles(res.data.articles);
+    } catch (error) {
+      console.log(error);
     }
-    
-    return (
-        <View style={styles.content}>
-            <Text style={{ fontSize: 18 }}>Aozora Select Screen</Text>
-        </View>
-    );
-}
+  };
+
+  useEffect(() => {
+    getArticles();
+  }, []);
+
+  return (
+    <SafeAreaView>
+     
+      <FlatList
+        data={articles}
+        renderItem={({ item }) => (
+          <>
+            <Text>{item.title}</Text>
+            {item.urlToImage && (
+                <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10}}>
+              <Image
+                source={{ uri: item.urlToImage }}
+                style={{ width: 200, height: 120 }}
+              />
+              <Text style={{width:'45%',marginLeft:10}}>{item.description}</Text>
+                </View>
+            )}
+          </>
+        )}
+        keyExtractor={(item) => item.url} // idがないのでURLを使用
+      />
+    </SafeAreaView>
+  );
+
+};
 
 export default function TextSelectScreen(){
     const [currentTab,setCurrentTab]=useState('write');
