@@ -200,7 +200,7 @@ function AozoraSelect() {
     const [seachWord,setSeachWord] =useState('');
     const [articles, setArticles] = useState<Article[]>([]);
     const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-    const url = `https://newsdata.io/api/1/news?apikey=pub_36db2c557766462dac0779c2e16416ac&language=ja&q=とまと`;
+    const url = `https://newsdata.io/api/1/news?apikey=pub_36db2c557766462dac0779c2e16416ac&language=ja&q=${seachWord}`;
 
     const router = useRouter();
     const [titleBoxHeight, setTitleBoxHeight] = useState(40);
@@ -232,7 +232,7 @@ function AozoraSelect() {
             Alert.alert('文章を入力してください');
             return;
         }
-        router.push('(tabs)/display?mode=input')
+        router.push('app/display?mode=input')
     }
   function NewsPlace(){
     console.log("tomatotmato");
@@ -368,9 +368,7 @@ function AozoraSelect() {
         </ScrollView>
     );
 }
-if (showNewsPlace) {
-    return <NewsPlace />;
-  }
+
   const getArticles = async () => {
     try {
       const res = await axios.get(
@@ -378,12 +376,12 @@ if (showNewsPlace) {
       );
       const filterRes=res.data.results.filter((article:Article)=>article.description!==null&&article.description.trim()!=='');
       setArticles(filterRes);
-      console.log("tomato");
       setShowNews(true);
     } catch (error) {
       console.log(error);
     }
   };
+    console.log(seachWord);
   return (
     <View style={{flexDirection:'column'}}>
         <View style={{flexDirection:'row'}}>
