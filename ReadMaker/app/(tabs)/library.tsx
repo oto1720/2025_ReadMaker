@@ -12,6 +12,7 @@ import { Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import Constants from 'expo-constants';
@@ -124,10 +125,10 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                         marginVertical:5,
                         marginLeft:10,
                         }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='normal'&&styles.ON]}onPress={()=>
+                        <TouchableOpacity style={[styles.toggleButton]}onPress={()=>
                             setHowToShow('normal')
-                        }></TouchableOpacity>
-                        <Text style={{fontSize:20}}>通常表示</Text>
+                        }><View style={[styles.toggleOFFButton,howToShow==='normal'&&styles.ON]}></View></TouchableOpacity>
+                        <Text style={{fontSize:20,marginLeft:5}}>通常表示</Text>
                     </View>
                     <View style={{flexDirection:'row',
                         alignSelf:'flex-start',
@@ -135,10 +136,10 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                         marginVertical:5,
                         marginLeft:10,
                         }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='word'&&styles.ON]} onPress={()=>
+                        <TouchableOpacity style={[styles.toggleButton]} onPress={()=>
                             setHowToShow('word')
-                        }></TouchableOpacity>
-                    <Text style={{fontSize:20}}>単語別表示</Text>
+                        }><View style={[styles.toggleOFFButton,howToShow==='word'&&styles.ON]}></View></TouchableOpacity>
+                    <Text style={{fontSize:20,marginLeft:5}}>単語別表示</Text>
                     </View>
                 </View>
                
@@ -152,7 +153,7 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                         <Text style={{fontSize:15,marginLeft:10}}>遅い</Text>
                         <Slider
                             style={styles.slider}
-                            minimumValue={100}
+                            minimumValue={50}
                             maximumValue={400}
                             minimumTrackTintColor="#8a46caff"
                             maximumTrackTintColor="#ffe4bcff"
@@ -161,7 +162,7 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                         />
                         <Text style={{fontSize:15,marginRight:10}}>速い</Text>
                     </View>
-                    <Text>{WPM}WPM</Text>
+                    <Text style={{fontSize:20}}>{WPM}WPM</Text>
                     <View style={{flexDirection:'row',
                         marginTop:20,
                         marginLeft:10,
@@ -230,23 +231,26 @@ function NewsSelect({onSelectArticle}:{onSelectArticle:(title:string,text:string
   };
     console.log(seachWord);
   return (
-    <View style={{flexDirection:'column',}}>
+    <LinearGradient style={{flexDirection:'column',flex:1}}
+            colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+            
+        >
         
-        <View style={{flexDirection:'row',backgroundColor:'#fff',justifyContent:'space-between',marginLeft:10,marginTop:5}}>
+        <View style={{flexDirection:'row',backgroundColor:'#fff',justifyContent:'space-between',marginLeft:10,marginTop:5,marginBottom:5}}>
                 <TextInput
+                style={{flex:1,borderWidth:1,borderRadius:5,fontSize:18}}
                     placeholder='検索ワードを入力'
                     value={seachWord}
                     onChangeText={(text)=>setSeachWord(text)}
                 />
-                <TouchableOpacity onPress={() => getArticles()}>
-                    <Text style={{borderWidth:1,borderColor:'#000',top:'25%'}}>検索</Text>
+                <TouchableOpacity 
+                    style={{borderWidth:1,borderColor:'#000',marginRight:5,}}
+                    onPress={() => getArticles()}
+                    >
+                    <Ionicons name='search' size={40}></Ionicons>
                 </TouchableOpacity>
         </View>
-        
-        <View>
-            <LinearGradient 
-                colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
-            >
+                  
         <FlatList
         style={{backgroundColor:'#f0f0f0'}}
         data={articles}
@@ -279,11 +283,8 @@ function NewsSelect({onSelectArticle}:{onSelectArticle:(title:string,text:string
           
         )}
         keyExtractor={(item) => item.url} // idがないのでURLを使用
-        />
-        </LinearGradient>
-      </View>
-      
-    </View>
+        /> 
+    </LinearGradient>
   )
 };
 
@@ -418,14 +419,23 @@ const styles = StyleSheet.create({
         justifyContent:'center',
         alignItems:'center',
     },
+    toggleOFFButton:{
+        width:17,
+        height:17,
+        borderRadius:10,
+        borderWidth:1.5,
+        borderColor:'#555',
+        justifyContent:'center',
+        alignItems:'center',
+    },
     ON:{
-        backgroundColor:'#0000ff'
+        backgroundColor:'#0000ff',
     },    
     slider:{
         width: '80%',
         height: 20,
-        backgroundColor: '#f1bcbc',
-        borderRadius: 20,
+        backgroundColor: '#ffffffff',
+        borderRadius: 5,
         marginTop: 10,
     },
     expectView:{
