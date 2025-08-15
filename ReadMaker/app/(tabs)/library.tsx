@@ -34,7 +34,7 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
             case length<400:
                 return '上級';
             case length>=400:
-                return '超上級';
+                return '超級';
         }
     }
     function GameStart(){
@@ -49,7 +49,10 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
         router.push('app/render/display?mode=input')
     }
     return (
-        <ScrollView >
+        <ScrollView>
+            <LinearGradient 
+                colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+            >
             <View>
                 <View style={styles.writeScreen}>        
                     <View style={styles.itemView}>
@@ -167,22 +170,35 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                             <Text style={{fontSize:20,alignSelf:'center'}}>予想時間</Text>
                             <Text style={styles.expectText}>{Math.round(text.length/WPM)}分</Text>
                         </View>
-                        <View style={styles.expectView}>
+                        <LinearGradient 
+                        style={styles.expectView}
+                            colors={['#ffffffff',`rgba(${855-text.length*(255/400)},${255-text.length*(255/400)},${255-text.length*(255/400)},1)`]}
+                        >     
                             <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
-                            <Text style={styles.expectText}>{GetDifficult(text.length)}</Text>
-                        </View>
+                            <Text style={[styles.expectText,{color:`rgba(${text.length*(255/400)-255},${text.length*(255/400)-255},${text.length*(255/400)-255},1)`}]}>{GetDifficult(text.length)}</Text>
+                       </LinearGradient>
                     </View>
                     
                 </View>
+                <LinearGradient 
+                        colors={['rgba(100, 100, 243, 1)','#00f']}
+                        style={styles.startButton}
+                    >
                 <TouchableOpacity onPress={()=>GameStart()}>
-                    <Text style={styles.startButton}>スタート</Text>
+                    
+                    <Text style={{color:'#fff',fontSize: 35}}>
+                        スタート
+                        </Text>
+                    
                 </TouchableOpacity>
+                </LinearGradient>
             </View>
+            </LinearGradient>
         </ScrollView>
     );
 }
 
-function AozoraSelect({onSelectArticle}:{onSelectArticle:(title:string,text:string)=>void}) {
+function NewsSelect({onSelectArticle}:{onSelectArticle:(title:string,text:string)=>void}) {
     type Article = {
   source: {
     id: string | null;
@@ -215,6 +231,7 @@ function AozoraSelect({onSelectArticle}:{onSelectArticle:(title:string,text:stri
     console.log(seachWord);
   return (
     <View style={{flexDirection:'column',}}>
+        
         <View style={{flexDirection:'row',backgroundColor:'#fff',justifyContent:'space-between',marginLeft:10,marginTop:5}}>
                 <TextInput
                     placeholder='検索ワードを入力'
@@ -225,11 +242,16 @@ function AozoraSelect({onSelectArticle}:{onSelectArticle:(title:string,text:stri
                     <Text style={{borderWidth:1,borderColor:'#000',top:'25%'}}>検索</Text>
                 </TouchableOpacity>
         </View>
-
+        
+        <View>
+            <LinearGradient 
+                colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+            >
         <FlatList
         style={{backgroundColor:'#f0f0f0'}}
         data={articles}
         renderItem={({ item }) => (
+            
           <TouchableOpacity onPress={()=>{
             onSelectArticle(item.title,item.description);
             
@@ -241,6 +263,7 @@ function AozoraSelect({onSelectArticle}:{onSelectArticle:(title:string,text:stri
                 marginBottom:5
             }}
           >
+            
             <Text style={{backgroundColor:'#fff'}}>{item.title}</Text>
             {item.image_url && (
                 <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10,backgroundColor:'#fff'}}>
@@ -251,10 +274,15 @@ function AozoraSelect({onSelectArticle}:{onSelectArticle:(title:string,text:stri
               <Text style={{width:'45%',marginLeft:10}}>{item.description}</Text>
                 </View>
             )}
+             
           </TouchableOpacity>
+          
         )}
         keyExtractor={(item) => item.url} // idがないのでURLを使用
-      />
+        />
+        </LinearGradient>
+      </View>
+      
     </View>
   )
 };
@@ -268,7 +296,7 @@ export default function TextSelectScreen(){
             case 'write':
                 return <WriteText initialTitle={selectedTitle} initialText={selectedText}/>;
             case 'news':
-                return <AozoraSelect
+                return <NewsSelect
                     onSelectArticle={(title,text)=>{
                         setSelectedTitle(title);
                         setSelectedText(text);
@@ -419,7 +447,6 @@ const styles = StyleSheet.create({
     },
     startButton:{
         color: '#ffffff',
-        fontSize: 30,
         backgroundColor: '#007AFF',
         padding: 10,
         borderRadius: 10,
