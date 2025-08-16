@@ -14,7 +14,7 @@ interface SpeedControlProps {
 const SpeedControl: React.FC<SpeedControlProps> = ({
   initialSpeed = 300,
   minSpeed = 100,
-  maxSpeed = 800,
+  maxSpeed = 1000,
   onSpeedChange
 }) => {
   //スライダーの値変更時に呼び出される
@@ -30,7 +30,7 @@ const SpeedControl: React.FC<SpeedControlProps> = ({
     <View style={styles.container}>
       <Text style={styles.label}>読み取り速度</Text>
       <View style={styles.speedDisplay}>
-        <Text style={styles.speedValue}>{currentSpeed} WPM</Text>
+        <Text style={styles.speedValue}>{currentSpeed}文字/分</Text>
       </View>
       <View style={styles.sliderContainer}>
         <Text style={styles.minMaxLabel}>{minSpeed}</Text>
@@ -42,6 +42,7 @@ const SpeedControl: React.FC<SpeedControlProps> = ({
           onValueChange={handleSpeedChange}
           minimumTrackTintColor="#FF6B35"
           maximumTrackTintColor="#E0E0E0"
+          step={50}
         />
         <Text style={styles.minMaxLabel}>{maxSpeed}</Text>
       </View>
