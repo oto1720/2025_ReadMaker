@@ -26,6 +26,10 @@ name = "test_bridge"
 path = "test_bridge.rs"
 
 [[bin]]
+name = "benchmark"
+path = "src/benchmark.rs"
+
+[[bin]]
 name = "compile_dict"
 path = "src/compile_dict.rs"
 required-features = ["build-tools"]
