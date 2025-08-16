@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import Library from './library';
 
@@ -208,6 +209,7 @@ interface MainDisplayProps {
 }
 
 const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
+  const router = useRouter();
   const [speed, setSpeed] = useState(300);
   const [displayMode, setDisplayMode] = useState<'normal' | 'word'>('normal');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -234,75 +236,98 @@ const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
     }
   };
 
+  const handleNavigateToResult = () => {
+    // Expo Routerを使用した遷移
+    router.push({
+      pathname: '/result',
+      params: {
+        originalText: SAMPLE_TEXT,
+        readingSpeed: speed.toString(),
+        displayMode: displayMode,
+      }
+    });
+    
+    // プロパティで渡されたコールバックも実行（あれば）
+    if (onNavigateToResult) {
+      onNavigateToResult();
+    }
+  };
+
   return (
     <View style={styles.mainContainer}>
-      {/* ヘッダー */}
-      <View style={styles.header}>
-        <Text style={styles.title}>速読トレーニング</Text>
-      </View>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <Text style={styles.title}>速読トレーニング</Text>
+        </View>
 
-      {/* コントロールセクション */}
-      <View style={styles.controlsSection}>
-        <SpeedControl 
-          speed={speed}
-          onSpeedChange={setSpeed}
-        />
-        <DisplayModeToggle
-          currentMode={displayMode}
-          onModeChange={handleModeChange}
-          disabled={isPlaying}
-        />
-      </View>
+        {/* コントロールセクション */}
+        <View style={styles.controlsSection}>
+          <SpeedControl 
+            speed={speed}
+            onSpeedChange={setSpeed}
+          />
+          <DisplayModeToggle
+            currentMode={displayMode}
+            onModeChange={handleModeChange}
+            disabled={isPlaying}
+          />
+        </View>
 
-      {/* テキスト表示セクション */}
-      <View style={styles.displaySection}>
-        <TextDisplay
-          text={SAMPLE_TEXT}
-          speed={speed}
-          isPlaying={isPlaying}
-          displayMode={displayMode}
-          onComplete={handleComplete}
-        />
-      </View>
+        {/* テキスト表示セクション */}
+        <View style={styles.displaySection}>
+          <TextDisplay
+            text={SAMPLE_TEXT}
+            speed={speed}
+            isPlaying={isPlaying}
+            displayMode={displayMode}
+            onComplete={handleComplete}
+          />
+        </View>
 
-      {/* 制御ボタン */}
-      <View style={styles.controlButtons}>
-        <TouchableOpacity
-          style={[
-            styles.controlBtn,
-            styles.playPauseBtn,
-            isCompleted && styles.controlBtnDisabled
-          ]}
-          onPress={handlePlayPause}
-          disabled={isCompleted}
-        >
-          <Text style={styles.controlBtnText}>
-            {isPlaying ? '⏸️ 一時停止' : '▶️ 開始'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.controlBtn, styles.resetBtn]}
-          onPress={handleReset}
-        >
-          <Text style={styles.resetBtnText}>🔄 リセット</Text>
-        </TouchableOpacity>
-      </View>
+        {/* 制御ボタン */}
+        <View style={styles.controlButtons}>
+          <TouchableOpacity
+            style={[
+              styles.controlBtn,
+              styles.playPauseBtn,
+              isCompleted && styles.controlBtnDisabled
+            ]}
+            onPress={handlePlayPause}
+            disabled={isCompleted}
+          >
+            <Text style={styles.controlBtnText}>
+              {isPlaying ? '⏸️ 一時停止' : '▶️ 開始'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.controlBtn, styles.resetBtn]}
+            onPress={handleReset}
+          >
+            <Text style={styles.resetBtnText}>🔄 リセット</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* 完了メッセージ */}
-      {isCompleted && (
-        <TouchableOpacity 
-          style={styles.completionMessage}
-          onPress={onNavigateToResult}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.completionTitle}>🎉 読書完了！</Text>
-          <Text style={styles.completionText}>タップして理解度判定に進む</Text>
-          <View style={styles.tapIndicator}>
-            <Text style={styles.tapIcon}>👆</Text>
-            <Text style={styles.tapHint}>タップしてください</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+        {/* 完了メッセージ */}
+        {isCompleted && (
+          <TouchableOpacity 
+            style={styles.completionMessage}
+            onPress={handleNavigateToResult}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.completionTitle}>🎉 読書完了！</Text>
+            <Text style={styles.completionText}>タップして理解度判定に進む</Text>
+            <View style={styles.tapIndicator}>
+              <Text style={styles.tapIcon}>👆</Text>
+              <Text style={styles.tapHint}>タップしてください</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -311,9 +336,14 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#f0f2f5',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: 15,
     paddingTop: 40,
-    paddingBottom: 20,
+    paddingBottom: 30,
   },
   header: {
     alignItems: 'center',
@@ -459,8 +489,7 @@ const styles = StyleSheet.create({
   // Text Display Styles
   displaySection: {
     marginBottom: 20,
-    flex: 1,
-    justifyContent: 'center',
+    minHeight: 200,
   },
   textDisplayArea: {
     width: '100%',

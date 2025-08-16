@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 // AI判定のシミュレーション関数
 const evaluateComprehension = (userInput: string, originalText: string): { rank: 'S' | 'A' | 'B', comment: string } => {
@@ -33,12 +34,20 @@ interface ResultProps {
 }
 
 const Result: React.FC<ResultProps> = ({ 
-  originalText = "デフォルトテキスト",
-  readingSpeed = 300,
-  displayMode = 'normal',
+  originalText,
+  readingSpeed,
+  displayMode,
   onRetry,
   onHome 
 }) => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  
+  // パラメータから値を取得（URL経由の場合）
+  const finalOriginalText = originalText || (params.originalText as string) || "デフォルトテキスト";
+  const finalReadingSpeed = readingSpeed || parseInt(params.readingSpeed as string) || 300;
+  const finalDisplayMode = displayMode || (params.displayMode as 'normal' | 'word') || 'normal';
+  
   const [userInput, setUserInput] = useState('');
   const [evaluation, setEvaluation] = useState<{ rank: 'S' | 'A' | 'B', comment: string } | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -53,10 +62,28 @@ const Result: React.FC<ResultProps> = ({
     
     // AI判定のシミュレーション（実際にはAPI呼び出し）
     setTimeout(() => {
-      const result = evaluateComprehension(userInput, originalText);
+      const result = evaluateComprehension(userInput, finalOriginalText);
       setEvaluation(result);
       setIsEvaluating(false);
     }, 2000);
+  };
+
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry();
+    } else {
+      // Expo RouterでmainDisplayに戻る
+      router.back();
+    }
+  };
+
+  const handleHome = () => {
+    if (onHome) {
+      onHome();
+    } else {
+      // Expo Routerでホームに戻る
+      router.push('/(tabs)');
+    }
   };
 
   const getRankColor = (rank: 'S' | 'A' | 'B') => {
@@ -86,7 +113,7 @@ const Result: React.FC<ResultProps> = ({
           <Text style={styles.subtitle}>読んだ内容をまとめて入力してください</Text>
           <View style={styles.statsContainer}>
             <Text style={styles.statsText}>
-              読み取り速度: {readingSpeed}文字/分 | モード: {displayMode === 'normal' ? '通常表示' : '単語分割'}
+              読み取り速度: {finalReadingSpeed}文字/分 | モード: {finalDisplayMode === 'normal' ? '通常表示' : '単語分割'}
             </Text>
           </View>
         </View>
@@ -152,14 +179,14 @@ const Result: React.FC<ResultProps> = ({
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[styles.actionBtn, styles.retryBtn]}
-                onPress={onRetry}
+                onPress={handleRetry}
               >
                 <Text style={styles.retryBtnText}>🔄 もう一度挑戦</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.actionBtn, styles.homeBtn]}
-                onPress={onHome}
+                onPress={handleHome}
               >
                 <Text style={styles.homeBtnText}>🏠 ホームに戻る</Text>
               </TouchableOpacity>
