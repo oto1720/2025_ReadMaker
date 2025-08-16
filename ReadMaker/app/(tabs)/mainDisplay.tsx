@@ -508,8 +508,8 @@ const styles = StyleSheet.create({
   controlButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    marginBottom: 10,
+    paddingHorizontal: 10,
   },
   controlBtn: {
     paddingVertical: 15,
@@ -542,12 +542,12 @@ const styles = StyleSheet.create({
   },
   controlBtnText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#ffffff',
   },
   resetBtnText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#333333',
   },
   // Completion Message Styles
