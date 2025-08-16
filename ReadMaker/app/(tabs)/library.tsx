@@ -54,7 +54,6 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
             <LinearGradient 
                 colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
             >
-            <View>
                 <View style={styles.writeScreen}>        
                     <View style={styles.itemView}>
                         <Text style={styles.itemText}>タイトル</Text>
@@ -178,22 +177,18 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
                             <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
                             <Text style={[styles.expectText,{color:`rgba(${text.length*(255/400)-255},${text.length*(255/400)-255},${text.length*(255/400)-255},1)`}]}>{GetDifficult(text.length)}</Text>
                        </LinearGradient>
-                    </View>
-                    
+                    </View> 
                 </View>
                 <LinearGradient 
                         colors={['rgba(100, 100, 243, 1)','#00f']}
                         style={styles.startButton}
                     >
                 <TouchableOpacity onPress={()=>GameStart()}>
-                    
                     <Text style={{color:'#fff',fontSize: 35}}>
                         スタート
                         </Text>
-                    
                 </TouchableOpacity>
                 </LinearGradient>
-            </View>
             </LinearGradient>
         </ScrollView>
     );
@@ -308,7 +303,7 @@ export default function TextSelectScreen(){
         };
     return(
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#lala2e"/>
+            <StatusBar barStyle="light-content"/>
                 <LinearGradient style={styles.header} colors={['#1a1a2e', '#16213e', '#0f3460']}>
                     <Text style={styles.headerTitle}>テキスト設定</Text>
                     <Text style={styles.subTitle}>読みたい文章を選択してください</Text>
