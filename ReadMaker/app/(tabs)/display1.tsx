@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Library from './library';
 
 interface TextDisplayProps {
   text?: string; // オプショナルに変更
