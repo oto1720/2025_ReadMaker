@@ -203,7 +203,11 @@ const TextDisplay: React.FC<TextDisplayProps> = ({
   );
 };
 
-const MainDisplay: React.FC = () => {
+interface MainDisplayProps {
+  onNavigateToResult?: () => void;
+}
+
+const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
   const [speed, setSpeed] = useState(300);
   const [displayMode, setDisplayMode] = useState<'normal' | 'word'>('normal');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -286,10 +290,18 @@ const MainDisplay: React.FC = () => {
 
       {/* 完了メッセージ */}
       {isCompleted && (
-        <View style={styles.completionMessage}>
+        <TouchableOpacity 
+          style={styles.completionMessage}
+          onPress={onNavigateToResult}
+          activeOpacity={0.8}
+        >
           <Text style={styles.completionTitle}>🎉 読書完了！</Text>
-          <Text style={styles.completionText}>内容をまとめて入力してください</Text>
-        </View>
+          <Text style={styles.completionText}>タップして理解度判定に進む</Text>
+          <View style={styles.tapIndicator}>
+            <Text style={styles.tapIcon}>👆</Text>
+            <Text style={styles.tapHint}>タップしてください</Text>
+          </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -299,15 +311,17 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#f0f2f5',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingHorizontal: 15,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   header: {
     alignItems: 'center',
     marginBottom: 20,
+    paddingVertical: 5,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#333333',
     textAlign: 'center',
@@ -321,7 +335,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginVertical: 10,
+    marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -343,7 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   speedValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FF6B35',
   },
@@ -444,17 +458,15 @@ const styles = StyleSheet.create({
   },
   // Text Display Styles
   displaySection: {
+    marginBottom: 20,
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
   },
   textDisplayArea: {
     width: '100%',
-    maxWidth: 600,
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 40,
+    padding: 25,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -463,21 +475,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 10,
-    minHeight: 200,
+    minHeight: 160,
     justifyContent: 'space-between',
   },
   currentTextContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 120,
-    marginBottom: 30,
+    minHeight: 80,
+    marginBottom: 20,
   },
   currentText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '500',
     color: '#333333',
-    lineHeight: 40,
+    lineHeight: 36,
     textAlign: 'center',
   },
   progressInfo: {
@@ -487,14 +498,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     fontWeight: '500',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   progressBarContainer: {
-    width: 200,
+    width: '100%',
+    maxWidth: 200,
     alignItems: 'center',
   },
   progressBar: {
-    width: 200,
+    width: '100%',
     height: 4,
     backgroundColor: '#e0e0e0',
     borderRadius: 2,
@@ -506,17 +518,18 @@ const styles = StyleSheet.create({
   },
   // Control Buttons Styles
   controlButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingHorizontal: 20,
   },
   controlBtn: {
     paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
     borderRadius: 12,
-    marginHorizontal: 10,
-    minWidth: 140,
+    marginVertical: 8,
+    width: '100%',
+    maxWidth: 280,
     alignItems: 'center',
   },
   playPauseBtn: {
@@ -542,18 +555,18 @@ const styles = StyleSheet.create({
   },
   controlBtnText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#ffffff',
   },
   resetBtnText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#333333',
   },
   // Completion Message Styles
   completionMessage: {
     backgroundColor: '#ffffff',
-    padding: 20,
+    padding: 25,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000000',
@@ -565,6 +578,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#ff6b35',
   },
   completionTitle: {
     fontSize: 20,
@@ -576,6 +591,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     color: '#333333',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  tapIndicator: {
+    alignItems: 'center',
+  },
+  tapIcon: {
+    fontSize: 24,
+    marginBottom: 5,
+  },
+  tapHint: {
+    fontSize: 14,
+    color: '#ff6b35',
+    fontWeight: '600',
   },
 });
 
