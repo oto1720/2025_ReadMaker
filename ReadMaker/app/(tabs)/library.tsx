@@ -1,4 +1,4 @@
-import React,{ useState,useEffect } from 'react';
+import React,{ useState } from 'react';
 import { Text,
     View,
     StyleSheet,
@@ -8,22 +8,22 @@ import { Text,
     ScrollView,
     Alert,
     FlatList,
-    SafeAreaView,
     Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import Constants from 'expo-constants';
 
 const API_KEY=Constants.expoConfig?.extra?.NEWS_APIKEY;
-function WriteText() {
+function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initialText?:string}) {
     const router = useRouter();
     const [titleBoxHeight, setTitleBoxHeight] = useState(40);
     const [textBoxHeight, setTextBoxHeight] = useState(40);
-    const [title, setTitle] = useState('');
-    const [text, setText] = useState('');
+    const [title, setTitle] = useState(initialTitle);
+    const [text, setText] = useState(initialText);
     const [howToShow, setHowToShow] = useState('normal');
     const [WPM, setWPM] = useState(300);
     function GetDifficult(length:number){
@@ -35,7 +35,7 @@ function WriteText() {
             case length<400:
                 return '上級';
             case length>=400:
-                return '超上級';
+                return '超級';
         }
     }
     function GameStart(){
@@ -47,10 +47,13 @@ function WriteText() {
             Alert.alert('文章を入力してください');
             return;
         }
-        router.push('(tabs)/display?mode=input')
+        router.push('app/render/display?mode=input')
     }
     return (
-        <ScrollView >
+        <ScrollView>
+            <LinearGradient 
+                colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+            >
             <View>
                 <View style={styles.writeScreen}>        
                     <View style={styles.itemView}>
@@ -113,6 +116,7 @@ function WriteText() {
                     >
                     </TextInput>
                 </View>
+                <Text style={{alignSelf:'flex-end',right:15}}>{text.length}文字</Text>
                 <View style={styles.writeScreen}>
                     <Text style={styles.itemText}>表示方法</Text>              
                     <View style={{flexDirection:'row',
@@ -121,10 +125,10 @@ function WriteText() {
                         marginVertical:5,
                         marginLeft:10,
                         }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='normal'&&styles.ON]}onPress={()=>
+                        <TouchableOpacity style={[styles.toggleButton]}onPress={()=>
                             setHowToShow('normal')
-                        }></TouchableOpacity>
-                        <Text style={{fontSize:20}}>通常表示</Text>
+                        }><View style={[styles.toggleOFFButton,howToShow==='normal'&&styles.ON]}></View></TouchableOpacity>
+                        <Text style={{fontSize:20,marginLeft:5}}>通常表示</Text>
                     </View>
                     <View style={{flexDirection:'row',
                         alignSelf:'flex-start',
@@ -132,10 +136,10 @@ function WriteText() {
                         marginVertical:5,
                         marginLeft:10,
                         }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='word'&&styles.ON]} onPress={()=>
+                        <TouchableOpacity style={[styles.toggleButton]} onPress={()=>
                             setHowToShow('word')
-                        }></TouchableOpacity>
-                    <Text style={{fontSize:20}}>単語別表示</Text>
+                        }><View style={[styles.toggleOFFButton,howToShow==='word'&&styles.ON]}></View></TouchableOpacity>
+                    <Text style={{fontSize:20,marginLeft:5}}>単語別表示</Text>
                     </View>
                 </View>
                
@@ -149,7 +153,7 @@ function WriteText() {
                         <Text style={{fontSize:15,marginLeft:10}}>遅い</Text>
                         <Slider
                             style={styles.slider}
-                            minimumValue={100}
+                            minimumValue={50}
                             maximumValue={400}
                             minimumTrackTintColor="#8a46caff"
                             maximumTrackTintColor="#ffe4bcff"
@@ -158,7 +162,7 @@ function WriteText() {
                         />
                         <Text style={{fontSize:15,marginRight:10}}>速い</Text>
                     </View>
-                    <Text>{WPM}WPM</Text>
+                    <Text style={{fontSize:20}}>{WPM}WPM</Text>
                     <View style={{flexDirection:'row',
                         marginTop:20,
                         marginLeft:10,
@@ -167,22 +171,35 @@ function WriteText() {
                             <Text style={{fontSize:20,alignSelf:'center'}}>予想時間</Text>
                             <Text style={styles.expectText}>{Math.round(text.length/WPM)}分</Text>
                         </View>
-                        <View style={styles.expectView}>
+                        <LinearGradient 
+                        style={styles.expectView}
+                            colors={['#ffffffff',`rgba(${855-text.length*(255/400)},${255-text.length*(255/400)},${255-text.length*(255/400)},1)`]}
+                        >     
                             <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
-                            <Text style={styles.expectText}>{GetDifficult(text.length)}</Text>
-                        </View>
+                            <Text style={[styles.expectText,{color:`rgba(${text.length*(255/400)-255},${text.length*(255/400)-255},${text.length*(255/400)-255},1)`}]}>{GetDifficult(text.length)}</Text>
+                       </LinearGradient>
                     </View>
                     
                 </View>
+                <LinearGradient 
+                        colors={['rgba(100, 100, 243, 1)','#00f']}
+                        style={styles.startButton}
+                    >
                 <TouchableOpacity onPress={()=>GameStart()}>
-                    <Text style={styles.startButton}>スタート</Text>
+                    
+                    <Text style={{color:'#fff',fontSize: 35}}>
+                        スタート
+                        </Text>
+                    
                 </TouchableOpacity>
+                </LinearGradient>
             </View>
+            </LinearGradient>
         </ScrollView>
     );
 }
 
-function AozoraSelect() {
+function NewsSelect({onSelectArticle}:{onSelectArticle:(title:string,text:string)=>void}) {
     type Article = {
   source: {
     id: string | null;
@@ -199,210 +216,61 @@ function AozoraSelect() {
     
     const [seachWord,setSeachWord] =useState('');
     const [articles, setArticles] = useState<Article[]>([]);
-    const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
     const url = `https://newsdata.io/api/1/news?apikey=pub_36db2c557766462dac0779c2e16416ac&language=ja&q=${seachWord}`;
 
-    const router = useRouter();
-    const [titleBoxHeight, setTitleBoxHeight] = useState(40);
-    const [textBoxHeight, setTextBoxHeight] = useState(40);
-    const [title, setTitle] = useState('');
-    const [text, setText] = useState('');
-    const [howToShow, setHowToShow] = useState('normal');
-    const [WPM, setWPM] = useState(300);
-    const [showNews, setShowNews] = useState(false);
-    const [showNewsPlace, setShowNewsPlace] = useState(false);
-    function GetDifficult(length:number){
-        switch(true){
-            case length<50:
-                return '初級';
-            case length<200:
-                return '中級';
-            case length<400:
-                return '上級';
-            case length>=400:
-                return '超上級';
-        }
-    }
-    function GameStart(){
-        if(title.length<1){
-            Alert.alert('タイトルを入力してください');
-            return;
-        }
-        if(text.length<1){
-            Alert.alert('文章を入力してください');
-            return;
-        }
-        router.push('app/display?mode=input')
-    }
-  function NewsPlace(){
-    console.log("tomatotmato");
-    return (
-        <ScrollView >
-            <View>
-                <View style={styles.writeScreen}>        
-                    <View style={styles.itemView}>
-                        <Text style={styles.itemText}>タイトル</Text>
-                        <TouchableOpacity onPress={()=>{
-                                setTitle('')  
-                                setTitleBoxHeight(40)
-                            }
-                            }>
-                            <Text style={styles.clearButton}>✖</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <TextInput
-                        style={{
-                            height: Math.max(40, titleBoxHeight),
-                            backgroundColor: '#e8e8e8',
-                            borderWidth: 0,
-                            width: '100%',
-                            fontSize: 18,
-                            marginTop: 10 , 
-                            borderRadius:5,
-                            textAlignVertical: 'top',
-                        }}
-                        value={title}
-                        placeholder={selectedArticle? selectedArticle.title :''}
-                        multiline
-                        onChangeText={(title)=>setTitle(title)}
-                        onContentSizeChange={(e)=>{
-                            setTitleBoxHeight(e.nativeEvent.contentSize.height);
-                        }}
-                        />
-                </View>
-                <View style={styles.writeScreen}>
-                    <View style={styles.itemView}>
-                        <Text style={styles.itemText}>文章</Text>
-                        <TouchableOpacity onPress={()=>{
-                                setText('')
-                                setTextBoxHeight(40)
-                            }
-                            }>
-                            <Text style={styles.clearButton}>✖</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <TextInput style={{
-                            height: Math.max(40, textBoxHeight),
-                            backgroundColor: '#e8e8e8',
-                            borderWidth: 0,
-                            width: '100%',
-                            fontSize:18,
-                            marginTop: 10 , 
-                            textAlignVertical: 'top',
-                        }}
-                        placeholder={selectedArticle? selectedArticle.description :''}
-                        value={text}
-                        onChangeText={(text)=>setText(text)}
-                        multiline
-                        onContentSizeChange={(e)=>{
-                            setTextBoxHeight(e.nativeEvent.contentSize.height);
-                        }}
-                    >
-                    </TextInput>
-                </View>
-                <View style={styles.writeScreen}>
-                    <Text style={styles.itemText}>表示方法</Text>              
-                    <View style={{flexDirection:'row',
-                        alignSelf:'flex-start',
-                        justifyContent:'space-between',
-                        marginVertical:5,
-                        marginLeft:10,
-                        }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='normal'&&styles.ON]}onPress={()=>
-                            setHowToShow('normal')
-                        }></TouchableOpacity>
-                        <Text style={{fontSize:20}}>通常表示</Text>
-                    </View>
-                    <View style={{flexDirection:'row',
-                        alignSelf:'flex-start',
-                        justifyContent:'space-between',
-                        marginVertical:5,
-                        marginLeft:10,
-                        }}>
-                        <TouchableOpacity style={[styles.toggleButton,howToShow==='word'&&styles.ON]} onPress={()=>
-                            setHowToShow('word')
-                        }></TouchableOpacity>
-                    <Text style={{fontSize:20}}>単語別表示</Text>
-                    </View>
-                </View>
-               
-                <View style={styles.writeScreen}>
-                    
-                        <Text style={styles.itemText}>読書速度</Text>
-                        <View style={{
-                        justifyContent:'space-between',
-                        flexDirection:'row',
-                    }}>
-                        <Text style={{fontSize:15,marginLeft:10}}>遅い</Text>
-                        <Slider
-                            style={styles.slider}
-                            minimumValue={100}
-                            maximumValue={400}
-                            minimumTrackTintColor="#8a46caff"
-                            maximumTrackTintColor="#ffe4bcff"
-                            thumbTintColor="#6565e7ff"
-                            onValueChange={(WPM) => setWPM(Math.round(WPM))}
-                        />
-                        <Text style={{fontSize:15,marginRight:10}}>速い</Text>
-                    </View>
-                    <Text>{WPM}WPM</Text>
-                    <View style={{flexDirection:'row',
-                        marginTop:20,
-                        marginLeft:10,
-                    }}>
-                        <View style={styles.expectView}>
-                            <Text style={{fontSize:20,alignSelf:'center'}}>予想時間</Text>
-                            <Text style={styles.expectText}>{Math.round(text.length/WPM)}分</Text>
-                        </View>
-                        <View style={styles.expectView}>
-                            <Text style={{fontSize:20,alignSelf:'center'}}>難易度</Text>
-                            <Text style={styles.expectText}>{GetDifficult(text.length)}</Text>
-                        </View>
-                    </View>
-                    
-                </View>
-                <TouchableOpacity onPress={()=>GameStart()}>
-                    <Text style={styles.startButton}>スタート</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
-    );
-}
-
-  const getArticles = async () => {
+    const getArticles = async () => {
     try {
       const res = await axios.get(
         `${url}`
       );
       const filterRes=res.data.results.filter((article:Article)=>article.description!==null&&article.description.trim()!=='');
       setArticles(filterRes);
-      setShowNews(true);
     } catch (error) {
       console.log(error);
     }
   };
     console.log(seachWord);
   return (
-    <View style={{flexDirection:'column'}}>
-        <View style={{flexDirection:'row'}}>
+    <LinearGradient style={{flexDirection:'column',flex:1}}
+            colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+            
+        >
+        
+        <View style={{flexDirection:'row',backgroundColor:'#fff',justifyContent:'space-between',marginLeft:10,marginTop:5,marginBottom:5}}>
                 <TextInput
+                style={{flex:1,borderWidth:1,borderRadius:5,fontSize:18}}
                     placeholder='検索ワードを入力'
                     value={seachWord}
                     onChangeText={(text)=>setSeachWord(text)}
-                >
-                </TextInput>
-                <TouchableOpacity onPress={() => getArticles()}>
-                    <Text style={{borderWidth:1,borderColor:'#000',}}>検索</Text>
+                />
+                <TouchableOpacity 
+                    style={{borderWidth:1,borderColor:'#000',marginRight:5,}}
+                    onPress={() => getArticles()}
+                    >
+                    <Ionicons name='search' size={40}></Ionicons>
                 </TouchableOpacity>
         </View>
-
+                  
         <FlatList
+        style={{backgroundColor:'#f0f0f0'}}
         data={articles}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={NewsPlace}>
-            <Text>{item.title}</Text>
+            
+          <TouchableOpacity onPress={()=>{
+            onSelectArticle(item.title,item.description);
+            
+          }}
+            style={{borderWidth:1,
+                borderColor:'#000',
+                marginLeft:2,
+                marginRight:2,
+                marginBottom:5
+            }}
+          >
+            
+            <Text style={{backgroundColor:'#fff'}}>{item.title}</Text>
             {item.image_url && (
-                <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10}}>
+                <View style={{flexDirection:"row",width:'100%',justifyContent:'space-between',marginRight:10,backgroundColor:'#fff'}}>
               <Image
                 source={{ uri: item.image_url }}
                 style={{ width: 200, height: 120 }}
@@ -410,25 +278,34 @@ function AozoraSelect() {
               <Text style={{width:'45%',marginLeft:10}}>{item.description}</Text>
                 </View>
             )}
+             
           </TouchableOpacity>
+          
         )}
         keyExtractor={(item) => item.url} // idがないのでURLを使用
-      />
-         
-    </View>
+        /> 
+    </LinearGradient>
   )
 };
 
 export default function TextSelectScreen(){
-    const [currentTab,setCurrentTab]=useState('write');
+    const [currentTab,setCurrentTab]=useState<'write'|'news'>('write');
+    const [selectedTitle,setSelectedTitle]=useState('');
+    const [selectedText,setSelectedText]=useState('');
     const ShowScreen=()=>{
         switch(currentTab){
             case 'write':
-                return <WriteText/>;
-            case 'aozora':
-                return <AozoraSelect/>;
-        }
-    };
+                return <WriteText initialTitle={selectedTitle} initialText={selectedText}/>;
+            case 'news':
+                return <NewsSelect
+                    onSelectArticle={(title,text)=>{
+                        setSelectedTitle(title);
+                        setSelectedText(text);
+                        setCurrentTab('write');
+                    }}
+                    />;      
+                };
+        };
     return(
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#lala2e"/>
@@ -442,10 +319,10 @@ export default function TextSelectScreen(){
                     >
                         <Text style={styles.buttonText}>テキスト入力</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.switchButton,currentTab==='aozora'&&styles.activeButton]}
-                        onPress={()=>setCurrentTab('aozora')}
+                    <TouchableOpacity style={[styles.switchButton,currentTab==='news'&&styles.activeButton]}
+                        onPress={()=>setCurrentTab('news')}
                         >
-                        <Text style={styles.buttonText}>青空文庫</Text>
+                        <Text style={styles.buttonText}>ニュース</Text>
                     </TouchableOpacity>
                 </View>
                 {ShowScreen()}
@@ -542,14 +419,23 @@ const styles = StyleSheet.create({
         justifyContent:'center',
         alignItems:'center',
     },
+    toggleOFFButton:{
+        width:17,
+        height:17,
+        borderRadius:10,
+        borderWidth:1.5,
+        borderColor:'#555',
+        justifyContent:'center',
+        alignItems:'center',
+    },
     ON:{
-        backgroundColor:'#0000ff'
+        backgroundColor:'#0000ff',
     },    
     slider:{
         width: '80%',
         height: 20,
-        backgroundColor: '#f1bcbc',
-        borderRadius: 20,
+        backgroundColor: '#ffffffff',
+        borderRadius: 5,
         marginTop: 10,
     },
     expectView:{
@@ -571,7 +457,6 @@ const styles = StyleSheet.create({
     },
     startButton:{
         color: '#ffffff',
-        fontSize: 30,
         backgroundColor: '#007AFF',
         padding: 10,
         borderRadius: 10,
