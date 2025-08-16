@@ -52,7 +52,7 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
     return (
         <ScrollView>
             <LinearGradient 
-                colors={['#e0e0e0','#ebf5f7ff','#cdd8f3ff']}
+                colors={['#e3faffff','#d1f2f9ff','#b6b6d6ff']}
             >
                 <View style={styles.writeScreen}>        
                     <View style={styles.itemView}>
