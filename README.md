@@ -423,6 +423,523 @@ cd ReadMaker && npm test
 - [ ] パフォーマンス最適化
 - [ ] App Store / Google Play 配信
 
+## 🚀 本番環境デプロイ（Railway + EAS）
+
+### 概要
+**Railway**でバックエンドAPI、**Expo Application Services (EAS)**でモバイルアプリをデプロイする構成です。開発チームに最適化された実用的なデプロイ方法です。
+
+**推定コスト**: 月額$10-25（Railway + EAS）
+**構築時間**: 1-2時間
+**難易度**: 初級〜中級
+
+### アーキテクチャ
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   EAS Build     │    │   Railway API   │    │  Railway DB     │
+│   (Mobile App)  │───▶│   (Rust API)    │───▶│  (PostgreSQL)   │
+│                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                        │
+        │                        │
+        ▼                        ▼
+┌─────────────────┐    ┌─────────────────┐
+│   App Store     │    │   Web Access    │
+│   Google Play   │    │   API Endpoint  │
+└─────────────────┘    └─────────────────┘
+```
+
+---
+
+## 📋 STEP 1: Railway バックエンドデプロイ
+
+### 1-1. Railway アカウント設定
+```bash
+# 1. https://railway.app でアカウント作成
+# 2. GitHubアカウントでログイン
+# 3. New Project → Deploy from GitHub repo
+```
+
+### 1-2. Railway CLI インストール
+```bash
+# macOS
+brew install railway
+
+# Windows (PowerShell)
+iwr https://railway.app/install.ps1 | iex
+
+# Linux
+curl -fsSL https://railway.app/install.sh | sh
+
+# ログイン
+railway login
+```
+
+### 1-3. プロジェクト設定
+```bash
+# プロジェクトディレクトリで実行
+cd 2025_ReadMaker
+railway init
+
+# サービス作成
+railway add --database postgres
+railway add --service api
+```
+
+---
+
+## 📋 STEP 2: Railway用Docker設定
+
+### 2-1. Railway用Dockerfileの最適化
+既存の`backend/Dockerfile`をRailway用に最適化：
+
+```dockerfile
+# backend/Dockerfile.railway
+FROM rust:1.75-slim as builder
+
+WORKDIR /app
+
+# システム依存関係インストール
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 依存関係のキャッシュ用
+COPY Cargo.toml Cargo.lock ./
+COPY api/Cargo.toml ./api/
+COPY core/Cargo.toml ./core/
+COPY shared/Cargo.toml ./shared/
+
+# 空のsrcディレクトリを作成してキャッシュ
+RUN mkdir -p api/src core/src shared/src && \
+    echo "fn main() {}" > api/src/main.rs && \
+    echo "// lib" > core/src/lib.rs && \
+    echo "// lib" > shared/src/lib.rs
+
+# 依存関係ビルド
+RUN cargo build --release --bin api
+RUN rm -rf api/src core/src shared/src
+
+# 実際のソースコードをコピー
+COPY . .
+
+# アプリケーションビルド
+RUN cargo build --release --bin api
+
+# 本番用イメージ
+FROM debian:bullseye-slim
+
+# 必要なランタイム依存関係
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl1.1 \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ビルドされたバイナリをコピー
+COPY --from=builder /app/target/release/api ./api
+
+# 非rootユーザー作成
+RUN useradd -m -u 1001 appuser && chown appuser:appuser /app/api
+USER appuser
+
+EXPOSE 3000
+
+CMD ["./api"]
+```
+
+### 2-2. Railway設定ファイル
+```json
+{
+  "name": "readmaker-api",
+  "build": {
+    "dockerfile": "backend/Dockerfile.railway"
+  },
+  "deploy": {
+    "healthcheckPath": "/health",
+    "restartPolicyType": "on-failure"
+  }
+}
+```
+
+### 2-3. 環境変数設定
+```bash
+# Railway環境変数設定
+railway variables set JWT_SECRET=$(openssl rand -hex 32)
+railway variables set RUST_LOG=info
+railway variables set APP_ENV=production
+railway variables set PORT=3000
+
+# PostgreSQL接続（Railwayが自動設定）
+# DATABASE_URL は自動で設定されます
+```
+
+---
+
+## 📋 STEP 3: EAS フロントエンドデプロイ
+
+### 3-1. EAS CLI セットアップ
+```bash
+# EAS CLIインストール
+npm install -g @expo/eas-cli
+
+# Expoアカウントログイン
+eas login
+
+# ReadMakerディレクトリで初期化
+cd ReadMaker
+eas init --id your-expo-project-id
+```
+
+### 3-2. EAS設定ファイル作成
+```json
+{
+  "cli": {
+    "version": ">= 5.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "simulator": true
+      },
+      "android": {
+        "resourceClass": "medium"
+      }
+    },
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium"
+      },
+      "env": {
+        "API_BASE_URL": "https://readmaker-api-production.up.railway.app"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
+```
+
+### 3-3. アプリ設定更新
+```javascript
+// ReadMaker/app.config.js
+export default {
+  expo: {
+    name: "ReadMaker",
+    slug: "readmaker",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
+    splash: {
+      image: "./assets/splash.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff"
+    },
+    assetBundlePatterns: [
+      "**/*"
+    ],
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: "com.readmaker.app"
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#FFFFFF"
+      },
+      package: "com.readmaker.app"
+    },
+    web: {
+      favicon: "./assets/favicon.png"
+    },
+    extra: {
+      apiBaseUrl: process.env.API_BASE_URL || "http://localhost:3000",
+      eas: {
+        projectId: "your-expo-project-id"
+      }
+    }
+  }
+};
+```
+
+---
+
+## 📋 STEP 4: API接続設定
+
+### 4-1. フロントエンド環境変数設定
+```javascript
+// ReadMaker/src/config/api.js
+import Constants from 'expo-constants';
+
+const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl || 'http://localhost:3000';
+
+export const apiConfig = {
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
+
+export default API_BASE_URL;
+```
+
+### 4-2. APIサービス更新
+```javascript
+// ReadMaker/src/services/auth.js
+import axios from 'axios';
+import { apiConfig } from '../config/api';
+
+const api = axios.create(apiConfig);
+
+export const authService = {
+  async register(userData) {
+    try {
+      const response = await api.post('/auth/register', userData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
+  },
+
+  async login(credentials) {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  },
+
+  async getCurrentUser(token) {
+    try {
+      const response = await api.get('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to get user');
+    }
+  }
+};
+```
+
+---
+
+## 📋 STEP 5: デプロイ実行
+
+### 5-1. Railway バックエンドデプロイ
+```bash
+# プロジェクトディレクトリで実行
+cd 2025_ReadMaker
+
+# Railwayにデプロイ
+railway up
+
+# デプロイ状況確認
+railway status
+
+# ログ確認
+railway logs
+
+# ドメイン確認
+railway domain
+# 例: https://readmaker-api-production.up.railway.app
+```
+
+### 5-2. EAS モバイルアプリビルド
+```bash
+cd ReadMaker
+
+# 開発用ビルド
+eas build --platform all --profile development
+
+# プレビュー用ビルド（テスター配布）
+eas build --platform all --profile preview
+
+# 本番用ビルド（ストア申請用）
+eas build --platform all --profile production
+```
+
+### 5-3. EAS Submit（ストア配信）
+```bash
+# iOS App Store
+eas submit --platform ios
+
+# Google Play Store
+eas submit --platform android
+```
+
+---
+
+## 📋 STEP 6: CI/CD パイプライン
+
+### 6-1. GitHub Actions for Railway
+```yaml
+# .github/workflows/deploy-railway.yml
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'backend/**' ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+
+    - name: Deploy to Railway
+      run: railway up --service backend
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+```
+
+### 6-2. GitHub Actions for EAS
+```yaml
+# .github/workflows/eas-build.yml
+name: EAS Build
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'ReadMaker/**' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Setup Expo and EAS
+      uses: expo/expo-github-action@v8
+      with:
+        expo-version: latest
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+
+    - name: Install dependencies
+      run: cd ReadMaker && npm install
+
+    - name: Build app
+      run: cd ReadMaker && eas build --platform all --profile preview --non-interactive
+```
+
+---
+
+## 📋 STEP 7: 運用・監視
+
+### 7-1. Railway 監視設定
+```bash
+# Railway Dashboard での設定項目:
+# - Health Check: /health
+# - Auto-restart: Enabled
+# - Resource Usage Alerts
+# - Custom Domain (オプション)
+
+# メトリクス確認
+railway metrics
+
+# アラート設定
+# Railway Dashboard > Settings > Alerts
+```
+
+### 7-2. EAS 監視設定
+```bash
+# EAS Dashboard での確認項目:
+# - Build Status
+# - Distribution
+# - Crash Reports
+# - Usage Analytics
+
+# アプリアップデート配信
+eas update --branch production --message "Bug fixes and improvements"
+```
+
+---
+
+## 🎯 完了確認
+
+### デプロイ完了チェックリスト
+```bash
+# ✅ Railway API確認
+curl https://your-railway-domain.railway.app/health
+
+# ✅ Railway環境変数確認
+railway variables
+
+# ✅ データベース接続確認
+railway connect postgres
+
+# ✅ EAS ビルド確認
+eas build:list
+
+# ✅ モバイルアプリ動作確認
+# TestFlightまたはInternal App Sharingでテスト
+```
+
+### アクセス情報
+- **API Endpoint**: `https://your-railway-domain.railway.app`
+- **Railway Dashboard**: `https://railway.app/dashboard`
+- **EAS Dashboard**: `https://expo.dev/accounts/your-account/projects/readmaker`
+- **Mobile App**: TestFlight (iOS) / Internal Testing (Android)
+
+### トラブルシューティング
+```bash
+# Railway
+railway logs --tail 100
+railway status
+railway restart
+
+# EAS
+eas build:list
+eas build:view [build-id]
+eas diagnostics
+```
+
+**推定デプロイ時間**: 
+- Railway: 5-10分
+- EAS Build: 15-25分
+
+**月額コスト**: 
+- Railway: $5-20（使用量による）
+- EAS: $99/月（プロプラン）または従量課金
+
+---
+
 ## 🤝 コントリビューション
 
 1. このリポジトリをフォーク
