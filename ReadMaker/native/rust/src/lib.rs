@@ -5,15 +5,21 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
 use std::fs::File;
+use std::env;
 use std::io;
 use serde_json;
 use vibrato::{Dictionary, Tokenizer};
 
 /// Vibrato実装の形態素解析関数
-fn vibrato_analyze_text(input: &str, dict_path: &str) -> Result<Vec<String>, io::Error> {
+fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
+    // 辞書ファイルパス（環境変数で上書き可能）
+    // READMAKER_DIC_PATH が設定されていればそれを使用、なければ既定の相対パス
+    let dict_path = env::var("READMAKER_DIC_PATH")
+        .unwrap_or_else(|_| "dictionaries/ipadic.vibrato".to_string());
+    
     // 辞書ファイルの読み込み（zstd圧縮/非圧縮の両対応）
     let dict = {
-        let dict_file = File::open(dict_path)?;
+        let dict_file = File::open(&dict_path)?;
         // 1) zstd圧縮として読み込みを試す
         match zstd::stream::read::Decoder::new(dict_file) {
             Ok(mut decoder) => {
@@ -22,7 +28,7 @@ fn vibrato_analyze_text(input: &str, dict_path: &str) -> Result<Vec<String>, io:
                     Err(e) => {
                         // 2) 失敗したら非圧縮として再試行
                         eprintln!("[Vibrato] zstd解凍読み込み失敗: {} -> 生読み込み再試行", e);
-                        let raw_file = File::open(dict_path)?;
+                        let raw_file = File::open(&dict_path)?;
                         Dictionary::read(raw_file)
                             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
                     }
@@ -30,7 +36,7 @@ fn vibrato_analyze_text(input: &str, dict_path: &str) -> Result<Vec<String>, io:
             }
             Err(_) => {
                 // zstdとして開けなかった場合は非圧縮としてそのまま読む
-                let raw_file = File::open(dict_path)?;
+                let raw_file = File::open(&dict_path)?;
                 Dictionary::read(raw_file)
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
             }
@@ -64,9 +70,9 @@ fn analyze_text_fallback(text: &str) -> Vec<String> {
 }
 
 /// 公開API: 形態素解析関数（Vibrato実装）
-pub fn analyze_text(input: &str, dict_path: &str) -> Vec<String> {
+pub fn analyze_text(input: &str) -> Vec<String> {
     // Vibrato実装を試し、エラー時はフォールバック
-    match vibrato_analyze_text(input, dict_path) {
+    match vibrato_analyze_text(input) {
         Ok(words) => words,
         Err(e) => {
             eprintln!("[Vibrato] 解析エラー: {}", e);
@@ -81,10 +87,16 @@ pub fn words_to_json(words: &[String]) -> String {
 }
 
 /// JavaScript用のC FFI形態素解析関数
+/// 
+/// # 使用方法（JavaScript側）
+/// ```javascript
+/// const result = await analyzeText("吾輩は猫である。");
+/// console.log(result); // ["吾輩", "は", "猫", "で", "ある", "。"]
+/// ```
 #[no_mangle]
-pub extern "C" fn js_analyze_text(input: *const c_char, dict_path: *const c_char) -> *mut c_char {
+pub extern "C" fn js_analyze_text(input: *const c_char) -> *mut c_char {
     // NULLポインタチェック
-    if input.is_null() || dict_path.is_null() {
+    if input.is_null() {
         return ptr::null_mut();
     }
     
@@ -94,15 +106,9 @@ pub extern "C" fn js_analyze_text(input: *const c_char, dict_path: *const c_char
         Ok(s) => s,
         Err(_) => return ptr::null_mut(),
     };
-
-    let dict_path_c_str = unsafe { CStr::from_ptr(dict_path) };
-    let dict_path_str = match dict_path_c_str.to_str() {
-        Ok(s) => s,
-        Err(_) => return ptr::null_mut(),
-    };
     
     // 形態素解析実行
-    let words = analyze_text(input_str, dict_path_str);
+    let words = analyze_text(input_str);
     
     // JSON文字列として出力
     let json_result = words_to_json(&words);
@@ -115,6 +121,9 @@ pub extern "C" fn js_analyze_text(input: *const c_char, dict_path: *const c_char
 }
 
 /// JavaScript用のメモリ解放関数
+/// 
+/// # 重要
+/// js_analyze_text()で返されたポインタは必ずこの関数で解放すること
 #[no_mangle]
 pub extern "C" fn js_free_string(ptr: *mut c_char) {
     if !ptr.is_null() {
@@ -141,11 +150,24 @@ mod tests {
     
     #[test]
     fn test_js_bridge_basic() {
-        // NOTE: This test is now invalid as it doesn't pass the dictionary path.
-        // A new test would require a valid dictionary path.
-        // let input = CString::new("今日は良い天気です。").unwrap();
-        // let result_ptr = js_analyze_text(input.as_ptr());
-        // ...
+        let input = CString::new("今日は良い天気です。").unwrap();
+        let result_ptr = js_analyze_text(input.as_ptr());
+        
+        assert!(!result_ptr.is_null());
+        
+        let result_cstr = unsafe { CStr::from_ptr(result_ptr) };
+        let result_str = result_cstr.to_str().unwrap();
+        
+        // デバッグ出力追加
+        println!("形態素解析結果: {}", result_str);
+        
+        // JSON配列形式かチェック
+        assert!(result_str.starts_with('['));
+        assert!(result_str.ends_with(']'));
+        assert!(result_str.contains("今日"));
+        
+        // メモリ解放
+        js_free_string(result_ptr);
     }
     
     #[test]
