@@ -7,13 +7,13 @@ import { NativeModules, Platform } from 'react-native';
 
 // TypeScript型定義
 export interface MorphologyAnalysis {
-  analyzeText(input: string): Promise<string[]>;
+  analyzeText(input: string, dictPath: string): Promise<string[]>;
   testBridge(): Promise<string>;
 }
 
 // ネイティブモジュール型定義
 interface RustBridgeNative {
-  analyzeText(input: string): Promise<string>;
+  analyzeText(input: string, dictPath: string): Promise<string>;
   testBridge(): Promise<string>;
 }
 
@@ -38,20 +38,17 @@ class RustBridge implements MorphologyAnalysis {
   /**
    * 形態素解析実行
    * @param input 解析対象の日本語テキスト
+   * @param dictPath 辞書ファイルの絶対パス
    * @returns 形態素解析結果の配列
-   * 
-   * @example
-   * ```typescript
-   * const bridge = new RustBridge();
-   * const words = await bridge.analyzeText("吾輩は猫である。");
-   * console.log(words); // ["吾輩", "は", "猫", "で", "ある", "。"]
-   * ```
    */
-  async analyzeText(input: string): Promise<string[]> {
+  async analyzeText(input: string, dictPath: string): Promise<string[]> {
     try {
       // バリデーション
       if (typeof input !== 'string') {
         throw new Error('Input must be a string');
+      }
+      if (typeof dictPath !== 'string' || dictPath.trim().length === 0) {
+        throw new Error('Dictionary path must be a non-empty string');
       }
       
       if (input.trim().length === 0) {
@@ -64,7 +61,7 @@ class RustBridge implements MorphologyAnalysis {
       }
 
       // Rustネイティブ関数呼び出し
-      const jsonResult = await this.nativeModule.analyzeText(input);
+      const jsonResult = await this.nativeModule.analyzeText(input, dictPath);
       
       // JSON文字列をパース
       const words: string[] = JSON.parse(jsonResult);
@@ -126,11 +123,12 @@ export const getRustBridge = (): RustBridge => {
 /**
  * 便利関数: 形態素解析実行
  * @param input 解析対象テキスト
+ * @param dictPath 辞書ファイルの絶対パス
  * @returns 形態素解析結果
  */
-export const analyzeText = async (input: string): Promise<string[]> => {
+export const analyzeText = async (input: string, dictPath: string): Promise<string[]> => {
   const bridge = getRustBridge();
-  return bridge.analyzeText(input);
+  return bridge.analyzeText(input, dictPath);
 };
 
 /**
