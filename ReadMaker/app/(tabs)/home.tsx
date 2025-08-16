@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -12,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,6 +36,19 @@ interface Achievement {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  
+  // 認証チェック
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // ローディング中または未認証の場合は何も表示しない
+  if (isLoading || !isAuthenticated) {
+    return null;
+  }
   
   // ユーザー統計（後でAsyncStorageから取得）
   const [userStats, setUserStats] = useState<UserStats>({
@@ -70,7 +85,34 @@ export default function HomeScreen() {
 
   // 設定画面へ（将来実装）
   const handleSettings = () => {
-    Alert.alert('設定', '設定画面は開発中です');
+    Alert.alert(
+      '設定',
+      `ログインユーザー: ${user?.email || '不明'}`,
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        { 
+          text: 'ログアウト', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'ログアウト',
+              '本当にログアウトしますか？',
+              [
+                { text: 'キャンセル', style: 'cancel' },
+                { 
+                  text: 'ログアウト', 
+                  style: 'destructive',
+                  onPress: async () => {
+                    await logout();
+                    router.replace('/(auth)/login');
+                  }
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
   };
 
   // レベル進捗の計算
@@ -102,7 +144,9 @@ export default function HomeScreen() {
         <View style={styles.headerContent}>
           <View style={styles.welcomeSection}>
             <Text style={styles.welcomeText}>おかえりなさい！</Text>
-            <Text style={styles.appTitle}>速読マスター</Text>
+            <Text style={styles.appTitle}>
+              {user?.username || 'ゲスト'}さん
+            </Text>
           </View>
           
           <TouchableOpacity onPress={handleSettings} style={styles.settingsButton}>

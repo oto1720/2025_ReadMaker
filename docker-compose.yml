@@ -1,0 +1,105 @@
+
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: readmaker_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: readmaker
+      POSTGRES_USER: readmaker_user
+      POSTGRES_PASSWORD: readmaker
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      # データ永続化
+      - postgres_data:/var/lib/postgresql/data
+      # 初期化スクリプト
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      # PostgreSQL設定
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - readmaker_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U readmaker_user -d readmaker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin4 Web Interface
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: readmaker_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@readmaker.com
+      PGADMIN_DEFAULT_PASSWORD: readmaker
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      # pgAdmin設定永続化
+      - pgadmin_data:/var/lib/pgadmin
+      # サーバー設定自動インポート
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - readmaker_network
+
+  # Redis (将来のセッション管理用)
+  redis:
+    image: redis:7-alpine
+    container_name: readmaker_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - readmaker_network
+    command: redis-server --appendonly yes
+
+  # Rust Backend API
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: readmaker_api
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      RUST_LOG: debug
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - readmaker_network
+    volumes:
+      # 辞書ファイルをマウント
+      - ./ReadMaker/native/rust/dictionaries:/app/dictionaries:ro
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  readmaker_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

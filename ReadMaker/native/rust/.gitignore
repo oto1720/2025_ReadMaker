@@ -1,0 +1,19 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Vibrato辞書ファイル（容量が大きいため除外）
+dictionaries/
+*.dic
+*.dic.zst
+!dictionaries/ipadic.vibrato
+!dictionaries/README.md
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

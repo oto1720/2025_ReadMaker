@@ -18,6 +18,24 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: 'ライブラリ',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="library" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ranking"
+        options={{
+          title: 'ランキング',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="trophy" size={24} color={color} />
+          ),
+        }}
+      />
 
         </Tabs>
     )
