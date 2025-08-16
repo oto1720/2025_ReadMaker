@@ -39,6 +39,36 @@ ReadMaker/
     └── types/     # TypeScript型定義
 ```
 
+## 🐳 Docker初心者ガイド
+
+### Dockerとは？
+Dockerは、アプリケーションとその実行環境（データベース、キャッシュサーバーなど）を簡単に管理できるツールです。このプロジェクトでは、複雑なPostgreSQLやRedisの設定を自動化します。
+
+### Docker Desktop のインストール
+
+#### Windows
+1. [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) をダウンロード
+2. インストーラーを実行し、指示に従ってインストール
+3. 再起動後、Docker Desktopを起動
+4. WSL 2バックエンドの使用が推奨されます
+
+#### macOS
+1. [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) をダウンロード
+2. dmgファイルをマウントし、Docker.appをApplicationsフォルダにドラッグ
+3. Docker Desktopを起動
+
+### Docker動作確認
+```bash
+# Dockerが正しくインストールされているか確認
+docker --version
+docker-compose --version
+```
+
+### トラブルシューティング
+- **Windows**: WSL 2が有効になっていることを確認
+- **メモリ不足エラー**: Docker Desktopの設定でメモリを4GB以上に増加
+- **ポート競合**: 他のアプリケーションがポート3000, 5432, 6379を使用していないか確認
+
 ## 🔧 技術スタック
 
 ### バックエンド
@@ -66,6 +96,8 @@ ReadMaker/
 - Docker & Docker Compose
 - iOS/Android開発環境（シミュレータ用）
 
+> **💡 Docker初心者の方へ：** Dockerとは、アプリケーションとその実行環境をパッケージ化するツールです。このプロジェクトでは、PostgreSQLデータベースやRedisキャッシュサーバーをDockerで簡単に起動できます。
+
 ### 1. リポジトリクローン
 ```bash
 git clone https://github.com/oto1720/2025_ReadMaker.git
@@ -73,6 +105,8 @@ cd 2025_ReadMaker
 ```
 
 ### 2. 環境変数の設定
+
+#### macOS/Linux
 ```bash
 # ローカル開発用環境変数
 cp .env.example .env
@@ -84,11 +118,38 @@ cp .env.docker.example .env.docker
 openssl rand -hex 32
 ```
 
+#### Windows (PowerShell)
+```powershell
+# ローカル開発用環境変数
+Copy-Item .env.example .env
+
+# Docker環境用環境変数  
+Copy-Item .env.docker.example .env.docker
+
+# JWT_SECRETを安全な値に更新（両ファイル）
+# PowerShellで32文字のランダム文字列を生成
+-join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | % {[char]$_})
+```
+
+#### Windows (Command Prompt)
+```cmd
+# ローカル開発用環境変数
+copy .env.example .env
+
+# Docker環境用環境変数
+copy .env.docker.example .env.docker
+
+# JWT_SECRETは手動で32文字のランダム文字列に変更してください
+# 例: your_jwt_secret_here_change_in_production
+```
+
 **重要：** `.env`と`.env.docker`の違い
 - `.env` → ローカル開発（`localhost`で接続）
 - `.env.docker` → Docker環境（コンテナ名で接続）
 
 ### 3. バックエンド起動
+
+#### macOS/Linux (makeコマンド使用)
 ```bash
 # データベース・Redis起動
 make setup
@@ -96,6 +157,21 @@ make setup
 # Rust API開発サーバー起動（ホットリロード）
 make rust-dev
 ```
+
+#### Windows (Docker Composeコマンド直接実行)
+```powershell
+# データベース・Redis起動
+docker-compose up -d
+
+# Rust API開発サーバー起動（ホットリロード）
+# 別のターミナルで実行
+cd backend/api
+cargo watch -x run
+```
+
+> **💡 Windows向け補足：**
+> - `make`コマンドが使えない場合は、上記のDocker Composeコマンドを直接実行してください
+> - `cargo watch`がインストールされていない場合：`cargo install cargo-watch`
 
 ### 4. フロントエンド起動
 ```bash
@@ -129,6 +205,8 @@ PUT  /users/profile   # プロフィール更新
 ## 🔨 開発コマンド
 
 ### バックエンド開発
+
+#### macOS/Linux
 ```bash
 make rust-setup       # Rust環境セットアップ確認
 make rust-dev         # ホットリロード開発サーバー
@@ -137,7 +215,29 @@ make rust-build       # リリースビルド
 make api-logs         # APIログ表示
 ```
 
+#### Windows
+```powershell
+# Rust環境セットアップ確認
+rustc --version
+cd backend && cargo check
+
+# ホットリロード開発サーバー
+cargo install cargo-watch  # 初回のみ
+cd backend/api && cargo watch -x run
+
+# テスト実行
+cd backend && cargo test
+
+# リリースビルド
+cd backend && cargo build --release
+
+# APIログ表示
+docker-compose logs -f api
+```
+
 ### データベース操作
+
+#### macOS/Linux
 ```bash
 make db-connect       # PostgreSQL接続
 make db-reset         # データベースリセット
@@ -145,12 +245,44 @@ make db-backup        # バックアップ作成
 make logs-pg          # PostgreSQLログ表示
 ```
 
+#### Windows
+```powershell
+# PostgreSQL接続
+docker-compose exec postgres psql -U readmaker_user -d readmaker
+
+# データベースリセット
+docker-compose down
+docker volume rm 2025_readmaker_postgres_data
+docker-compose up -d
+
+# PostgreSQLログ表示
+docker-compose logs -f postgres
+```
+
 ### Docker管理
+
+#### macOS/Linux
 ```bash
 make start            # 全サービス起動
 make stop             # 全サービス停止
 make restart          # 全サービス再起動
 make clean            # 完全クリーンアップ
+```
+
+#### Windows
+```powershell
+# 全サービス起動
+docker-compose up -d
+
+# 全サービス停止
+docker-compose down
+
+# 全サービス再起動
+docker-compose restart
+
+# 完全クリーンアップ
+docker-compose down -v --remove-orphans
+docker system prune -f
 ```
 
 ## 📱 認証システム使用方法
