@@ -7,7 +7,7 @@ fn main() {
     // 辞書読み込みのウォームアップ（1回だけ）
     println!("🔄 辞書読み込み中...");
     let warmup_start = Instant::now();
-    let _ = analyze_text("テスト");
+    let _ = analyze_text("テスト", &[]);
     let warmup_time = warmup_start.elapsed();
     println!("✅ 辞書読み込み完了: {:.0}ms\n", warmup_time.as_secs_f64() * 1000.0);
     
@@ -30,7 +30,7 @@ fn main() {
         
         for _ in 0..iterations {
             let start = Instant::now();
-            result = analyze_text(text);
+            result = analyze_text(text, &[]);
             let duration = start.elapsed();
             min_duration = min_duration.min(duration);
         }

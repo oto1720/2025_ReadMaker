@@ -67,7 +67,21 @@ class RustBridge implements MorphologyAnalysis {
       const jsonResult = await this.nativeModule.analyzeText(input);
       
       // JSON文字列をパース
-      const words: string[] = JSON.parse(jsonResult);
+      import { analyzeText, getWords, textAnalyzer } from '../../src/services/textAnalyzer';
+
+// 既存のimportパスを維持しつつ、新実装に橋渡し
+export { analyzeText, getWords };
+
+// 追加のヘルパー関数
+export async function initializeAnalyzer(): Promise<boolean> {
+  return await textAnalyzer.initialize();
+}
+
+export async function getAnalyzerStatus() {
+  return textAnalyzer.getStatus();
+}
+
+
       
       return words;
       
