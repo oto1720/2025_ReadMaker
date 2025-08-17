@@ -23,3 +23,10 @@ backend/Cargo.lock
 
 # Development tool caches
 .serena/cache/
+
+# Node modules
+node_modules/
+ReadMaker/node_modules/
+
+# Rust build configuration
+ReadMaker/native/rust/.cargo/

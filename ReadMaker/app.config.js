@@ -12,7 +12,8 @@ export default {
       backgroundColor: "#ffffff"
     },
     assetBundlePatterns: [
-      "**/*"
+      "**/*",
+      "native/rust/dictionaries/**/*"  // 既存パスをそのまま指定
     ],
     ios: {
       supportsTablet: true,
@@ -31,11 +32,11 @@ export default {
     extra: {
       apiBaseUrl: process.env.API_BASE_URL || "http://localhost:3000",
       eas: {
-        projectId: "your-expo-project-id"
+                projectId: "YOUR_ACTUAL_PROJECT_ID"
       }
     },
     updates: {
-      url: "https://u.expo.dev/your-expo-project-id"
+      url: "https://u.expo.dev/YOUR_ACTUAL_PROJECT_ID"
     },
     runtimeVersion: {
       policy: "sdkVersion"

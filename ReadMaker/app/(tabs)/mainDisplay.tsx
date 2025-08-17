@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Library from './library';
+import { getWords } from '../../src/services/textAnalyzer';
 
 // サンプルテキスト（実際にはNewsAPIから取得する想定）
 const SAMPLE_TEXT = `最新の研究によると、人工知能の発達により、多くの業界で働き方が変化している。特に、医療分野では診断の精度が向上し、患者により良い治療を提供できるようになった。また、教育分野でも個別指導が可能となり、学習効率が大幅に改善されている。しかし、これらの技術進歩には新たな課題も伴う。プライバシーの保護やデータセキュリティの確保が重要な議題となっており、適切な規制の整備が求められている。`;
@@ -208,6 +209,19 @@ const MainDisplay: React.FC = () => {
   const [displayMode, setDisplayMode] = useState<'normal' | 'word'>('normal');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string>('解析結果：');
+
+  useEffect(() => {
+    const runAnalysis = async () => {
+      try {
+        const words = await getWords(SAMPLE_TEXT);
+        setAnalysisResult('解析結果：' + words.join(' | '));
+      } catch (e) {
+        setAnalysisResult('解析エラー：' + e.message);
+      }
+    };
+    runAnalysis();
+  }, []);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -235,6 +249,11 @@ const MainDisplay: React.FC = () => {
       {/* ヘッダー */}
       <View style={styles.header}>
         <Text style={styles.title}>速読トレーニング</Text>
+      </View>
+
+      {/* 解析結果表示 */}
+      <View style={styles.analysisResultContainer}>
+        <Text style={styles.analysisResultText}>{analysisResult}</Text>
       </View>
 
       {/* コントロールセクション */}
@@ -306,10 +325,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  title: {
+    title: {
     fontSize: 28,
     fontWeight: '700',
     color: '#333333',
+    textAlign: 'center',
+  },
+  analysisResultContainer: {
+    backgroundColor: '#e8f5e9', // Light green background
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  analysisResultText: {
+    fontSize: 14,
+    color: '#2e7d32', // Dark green text
+    fontWeight: '500',
     textAlign: 'center',
   },
   controlsSection: {

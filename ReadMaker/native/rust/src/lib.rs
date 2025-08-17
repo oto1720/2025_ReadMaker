@@ -11,33 +11,25 @@ use serde_json;
 use vibrato::{Dictionary, Tokenizer};
 
 /// Vibrato実装の形態素解析関数
-fn vibrato_analyze_text(input: &str) -> Result<Vec<String>, io::Error> {
-    // 辞書ファイルパス（環境変数で上書き可能）
-    // READMAKER_DIC_PATH が設定されていればそれを使用、なければ既定の相対パス
-    let dict_path = env::var("READMAKER_DIC_PATH")
-        .unwrap_or_else(|_| "dictionaries/ipadic.vibrato".to_string());
-    
-    // 辞書ファイルの読み込み（zstd圧縮/非圧縮の両対応）
+fn vibrato_analyze_text(input: &str, dictionary_data: &[u8]) -> Result<Vec<String>, io::Error> {
+    // 辞書データの読み込み（zstd圧縮/非圧縮の両対応）
     let dict = {
-        let dict_file = File::open(&dict_path)?;
         // 1) zstd圧縮として読み込みを試す
-        match zstd::stream::read::Decoder::new(dict_file) {
+        match zstd::stream::read::Decoder::new(dictionary_data) {
             Ok(mut decoder) => {
                 match Dictionary::read(&mut decoder) {
                     Ok(d) => d,
                     Err(e) => {
                         // 2) 失敗したら非圧縮として再試行
                         eprintln!("[Vibrato] zstd解凍読み込み失敗: {} -> 生読み込み再試行", e);
-                        let raw_file = File::open(&dict_path)?;
-                        Dictionary::read(raw_file)
+                        Dictionary::read(dictionary_data)
                             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
                     }
                 }
             }
             Err(_) => {
                 // zstdとして開けなかった場合は非圧縮としてそのまま読む
-                let raw_file = File::open(&dict_path)?;
-                Dictionary::read(raw_file)
+                Dictionary::read(dictionary_data)
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("辞書読み込みエラー: {}", e)))?
             }
         }
@@ -70,9 +62,9 @@ fn analyze_text_fallback(text: &str) -> Vec<String> {
 }
 
 /// 公開API: 形態素解析関数（Vibrato実装）
-pub fn analyze_text(input: &str) -> Vec<String> {
+pub fn analyze_text(input: &str, dictionary_data: &[u8]) -> Vec<String> {
     // Vibrato実装を試し、エラー時はフォールバック
-    match vibrato_analyze_text(input) {
+    match vibrato_analyze_text(input, dictionary_data) {
         Ok(words) => words,
         Err(e) => {
             eprintln!("[Vibrato] 解析エラー: {}", e);
@@ -90,13 +82,17 @@ pub fn words_to_json(words: &[String]) -> String {
 /// 
 /// # 使用方法（JavaScript側）
 /// ```javascript
-/// const result = await analyzeText("吾輩は猫である。");
+/// const result = await analyzeText("吾輩は猫である。", dictionaryData);
 /// console.log(result); // ["吾輩", "は", "猫", "で", "ある", "。"]
 /// ```
 #[no_mangle]
-pub extern "C" fn js_analyze_text(input: *const c_char) -> *mut c_char {
+pub extern "C" fn js_analyze_text(
+    input: *const c_char,
+    dictionary_data_ptr: *const u8,
+    dictionary_data_len: usize,
+) -> *mut c_char {
     // NULLポインタチェック
-    if input.is_null() {
+    if input.is_null() || dictionary_data_ptr.is_null() {
         return ptr::null_mut();
     }
     
@@ -106,9 +102,14 @@ pub extern "C" fn js_analyze_text(input: *const c_char) -> *mut c_char {
         Ok(s) => s,
         Err(_) => return ptr::null_mut(),
     };
+
+    // 辞書データポインタ → Rustスライス変換
+    let dictionary_data = unsafe {
+        std::slice::from_raw_parts(dictionary_data_ptr, dictionary_data_len)
+    };
     
     // 形態素解析実行
-    let words = analyze_text(input_str);
+    let words = analyze_text(input_str, dictionary_data);
     
     // JSON文字列として出力
     let json_result = words_to_json(&words);
