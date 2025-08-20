@@ -47,7 +47,17 @@ function WriteText({initialTitle='',initialText=''}:{initialTitle?:string,initia
             Alert.alert('文章を入力してください');
             return;
         }
-        router.push('app/render/display?mode=input')
+
+        // テキストとタイトルをパラメータとして渡す
+        router.push({
+            pathname: '/mainDisplay',
+            params: {
+                title: title,
+                text: text,
+                howToShow: howToShow,
+                WPM: WPM.toString()
+            }
+        });
     }
     return (
         <ScrollView>

@@ -1,5 +1,8 @@
 import { dictionaryLoader } from './dictionaryLoader';
-import { getRustBridge } from '../native/bridge/RustBridge';
+
+// 一時的にコメントアウトまたは削除
+// import { analyzeText } from '../native/bridge/RustBridge';
+
 
 class TextAnalyzer {
   private static instance: TextAnalyzer;
@@ -26,9 +29,12 @@ class TextAnalyzer {
       console.log('辞書データサイズ:', this.dictionaryData.length, 'bytes');
 
       // ブリッジが利用可能かテスト
-      const bridge = getRustBridge();
-      const testResult = await bridge.testBridge();
-      console.log('Bridge Test Result:', testResult);
+
+      // ダミーの実装を提供
+      // const bridge = getRustBridge();
+      // const testResult = await bridge.testBridge();
+      // console.log('Bridge Test Result:', testResult);
+
 
       if (this.dictionaryData) {
         this.initialized = true;
@@ -59,9 +65,13 @@ class TextAnalyzer {
         throw new Error('辞書データが利用できません');
       }
 
-      const bridge = getRustBridge();
+
+      // ダミーの実装を提供
+      // const bridge = getRustBridge();
       // 形態素解析実行
-      const words = await bridge.analyzeText(text, this.dictionaryData);
+      // const words = await bridge.analyzeText(text, this.dictionaryData);
+      const words = text.split(/[\s、。！？]+/).filter(word => word.trim().length > 0);
+
 
       console.log(`📝 入力: "${text}"`);
       console.log('🔍 解析結果:', words);

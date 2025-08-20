@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import Library from './library';
 import { getWords } from '../../src/services/textAnalyzer';
+import { useLocalSearchParams } from 'expo-router';
 
 // サンプルテキスト（実際にはNewsAPIから取得する想定）
 const SAMPLE_TEXT = `最新の研究によると、人工知能の発達により、多くの業界で働き方が変化している。特に、医療分野では診断の精度が向上し、患者により良い治療を提供できるようになった。また、教育分野でも個別指導が可能となり、学習効率が大幅に改善されている。しかし、これらの技術進歩には新たな課題も伴う。プライバシーの保護やデータセキュリティの確保が重要な議題となっており、適切な規制の整備が求められている。`;
@@ -211,8 +212,17 @@ interface MainDisplayProps {
 
 const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
   const router = useRouter();
-  const [speed, setSpeed] = useState(300);
-  const [displayMode, setDisplayMode] = useState<'normal' | 'word'>('normal');
+
+  const params = useLocalSearchParams();
+  
+  // パラメータからテキストを取得、なければSAMPLE_TEXTを使用
+  const [inputText, setInputText] = useState(params.text as string || SAMPLE_TEXT);
+  const [inputTitle, setInputTitle] = useState(params.title as string || 'サンプルテキスト');
+  const [displayMode, setDisplayMode] = useState<'normal' | 'word'>(
+    (params.howToShow as 'normal' | 'word') || 'normal'
+  );
+  const [speed, setSpeed] = useState(parseInt(params.WPM as string) || 300);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string>('解析結果：');
@@ -220,14 +230,15 @@ const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
   useEffect(() => {
     const runAnalysis = async () => {
       try {
-        const words = await getWords(SAMPLE_TEXT);
+        const words = await getWords(inputText); // SAMPLE_TEXTの代わりにinputTextを使用
         setAnalysisResult('解析結果：' + words.join(' | '));
       } catch (e) {
-        setAnalysisResult('解析エラー：' + e.message);
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+        setAnalysisResult('解析エラー：' + errorMessage);
       }
     };
     runAnalysis();
-  }, []);
+  }, [inputText]); // inputTextが変更されたときに再実行
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -255,7 +266,7 @@ const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
     router.push({
       pathname: '/result',
       params: {
-        originalText: SAMPLE_TEXT,
+        originalText: inputText,
         readingSpeed: speed.toString(),
         displayMode: displayMode,
       }
@@ -269,28 +280,17 @@ const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
 
   return (
     <View style={styles.mainContainer}>
-      {/* ヘッダー */}
-      <View style={styles.header}>
-        <Text style={styles.title}>速読トレーニング</Text>
-      </View>
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{inputTitle}</Text> {/* タイトルを表示 */}
+        </View>
 
-      {/* 解析結果表示 */}
-      <View style={styles.analysisResultContainer}>
-        <Text style={styles.analysisResultText}>{analysisResult}</Text>
-      </View>
+        {/* 解析結果表示 */}
+        <View style={styles.analysisResultContainer}>
+          <Text style={styles.analysisResultText}>{analysisResult}</Text>
+        </View>
 
-      {/* コントロールセクション */}
-      <View style={styles.controlsSection}>
-        <SpeedControl 
-          speed={speed}
-          onSpeedChange={setSpeed}
-        />
-        <DisplayModeToggle
-          currentMode={displayMode}
-          onModeChange={handleModeChange}
-          disabled={isPlaying}
-        />
-      </View>
         {/* コントロールセクション */}
         <View style={styles.controlsSection}>
           <SpeedControl 
@@ -307,7 +307,7 @@ const MainDisplay: React.FC<MainDisplayProps> = ({ onNavigateToResult }) => {
         {/* テキスト表示セクション */}
         <View style={styles.displaySection}>
           <TextDisplay
-            text={SAMPLE_TEXT}
+            text={inputText} // SAMPLE_TEXTの代わりにinputTextを使用
             speed={speed}
             isPlaying={isPlaying}
             displayMode={displayMode}
