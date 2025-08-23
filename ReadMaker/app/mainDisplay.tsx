@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
-import Library from './library';
+import Library from './(tabs)/library';
 
 // サンプルテキスト（実際にはNewsAPIから取得する想定）
 const SAMPLE_TEXT = `最新の研究によると、人工知能の発達により、多くの業界で働き方が変化している。特に、医療分野では診断の精度が向上し、患者により良い治療を提供できるようになった。また、教育分野でも個別指導が可能となり、学習効率が大幅に改善されている。しかし、これらの技術進歩には新たな課題も伴う。プライバシーの保護やデータセキュリティの確保が重要な議題となっており、適切な規制の整備が求められている。`;
